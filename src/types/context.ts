@@ -23,10 +23,31 @@ export interface ContextSection {
   sourceType: "preset" | "character" | "worldbook" | "memory";
 }
 
+export type WorldbookEvaluationReason =
+  | "always"
+  | "manual-selected"
+  | "manual-not-selected"
+  | "keyword-match"
+  | "keywords-empty"
+  | "keywords-no-match"
+  | "keywords-partial"
+  | "probability-miss"
+  | "disabled";
+
+export interface WorldbookEvaluation {
+  worldbook: WorldbookEntry;
+  included: boolean;
+  reason: WorldbookEvaluationReason;
+  matchedKeywords: string[];
+  missingKeywords: string[];
+}
+
 export interface ContextBundle {
   character: CharacterCard | null;
+  userPersona: CharacterCard | null;
   preset: PromptPreset | null;
   worldbooks: WorldbookEntry[];
+  worldbookEvaluations: WorldbookEvaluation[];
   memories: CharacterMemory[];
   sections: ContextSection[];
   promptPreview: string;

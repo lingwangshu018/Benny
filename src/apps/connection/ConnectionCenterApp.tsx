@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { openAICompatibleAdapter } from "../../ai/openAICompatibleAdapter";
 import { buildContext } from "../../context/contextBuilder";
+import {
+  contextReceipt,
+  type ContextReceipt,
+} from "../../features/context/contextReceipt";
 import { memoryEngine } from "../../memory/memoryEngine";
 import { vectorMemoryEngine } from "../../memory/vectorMemoryEngine";
 import { aiSettingsRepository } from "../../storage/aiSettingsRepository";
@@ -11,6 +15,7 @@ import { memoryExtractionRepository } from "../../storage/memoryExtractionReposi
 import { memoryRepository } from "../../storage/memoryRepository";
 import type { ChatMessage } from "../../types/ai";
 import type { ContextRequest } from "../../types/context";
+import { ContextReceiptDrawer } from "./ContextReceiptDrawer";
 
 interface ConnectionCenterAppProps {
   onOpenSettings: () => void;
@@ -85,6 +90,7 @@ export function ConnectionCenterApp({
   const [sending, setSending] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [memoryStatus, setMemoryStatus] = useState("");
+  const [lastReceipt, setLastReceipt] = useState<ContextReceipt | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -106,6 +112,14 @@ export function ConnectionCenterApp({
     );
     setMemoryStatus("");
   }, [session.characterId]);
+
+  useEffect(() => {
+    setLastReceipt(null);
+  }, [
+    session.characterId,
+    session.presetId,
+    session.manualWorldbookIds.join("|"),
+  ]);
 
   useEffect(() => {
     const reload = () =>
@@ -148,6 +162,29 @@ export function ConnectionCenterApp({
   );
   const activeCharacter = previewBundle.character;
   const aiReady = Boolean(settings.baseUrl && settings.model);
+  const previewHistoryLimit =
+    activeCharacter?.contextLimit ||
+    previewBundle.preset?.historyLimit ||
+    0;
+  const previewHistoryMessages = useMemo(() => {
+    const source = draft.trim()
+      ? [...messages, { content: draft.trim() }]
+      : messages;
+    return previewHistoryLimit > 0
+      ? source.slice(-previewHistoryLimit)
+      : source;
+  }, [draft, messages, previewHistoryLimit]);
+  const previewReceipt = useMemo(
+    () =>
+      contextReceipt.build(previewBundle, {
+        historyMessages: previewHistoryMessages,
+        historyLimit: previewHistoryLimit,
+      }),
+    [previewBundle, previewHistoryMessages, previewHistoryLimit],
+  );
+  const displayedReceipt =
+    draft.trim() || !lastReceipt ? previewReceipt : lastReceipt;
+  const receiptMode = draft.trim() || !lastReceipt ? "preview" : "sent";
 
   function saveMessages(next: ChatMessage[]) {
     setMessages(next);
@@ -291,13 +328,19 @@ export function ConnectionCenterApp({
         },
       );
       const historyLimit =
-        activeCharacter.contextLimit ||
-        selectedPreset?.historyLimit ||
+        context.character?.contextLimit ||
+        context.preset?.historyLimit ||
         0;
       const modelMessages =
         historyLimit > 0
           ? requestMessages.slice(-historyLimit)
           : requestMessages;
+      setLastReceipt(
+        contextReceipt.build(context, {
+          historyMessages: modelMessages,
+          historyLimit,
+        }),
+      );
       const response = await openAICompatibleAdapter.chat({
         settings,
         systemPrompt: context.promptPreview,
@@ -354,6 +397,7 @@ export function ConnectionCenterApp({
     chatRepository.clear(session.characterId);
     memoryExtractionRepository.reset(session.characterId);
     setMessages([]);
+    setLastReceipt(null);
   }
 
   if (characters.length === 0) {
@@ -389,97 +433,101 @@ export function ConnectionCenterApp({
         </button>
       </header>
 
-      <details className="chat-context-controls">
-        <summary>
-          <span>本次连接</span>
-          <small>
-            {previewBundle.worldbooks.length} 本世界书 ·{" "}
-            {previewBundle.memories.length} 条记忆
-          </small>
-        </summary>
-        <div>
-          <label>
-            角色
-            <select
-              value={session.characterId}
-              onChange={(event) => {
-                const character = characters.find(
-                  (item) => item.id === event.target.value,
-                );
-                setSession({
-                  ...session,
-                  characterId: event.target.value,
-                  presetId:
-                    character?.defaultPresetId || session.presetId,
-                });
-              }}
-            >
-              {characters.map((character) => (
-                <option key={character.id} value={character.id}>
-                  {character.remark || character.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            预设
-            <select
-              value={session.presetId}
-              onChange={(event) =>
-                setSession({ ...session, presetId: event.target.value })
-              }
-            >
-              <option value="">不使用预设</option>
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          {manualBooks.length > 0 && (
-            <div className="connection-chips">
-              {manualBooks.map((book) => (
-                <button
-                  className={
-                    session.manualWorldbookIds.includes(book.id)
-                      ? "active"
-                      : ""
-                  }
-                  type="button"
-                  key={book.id}
-                  onClick={() => toggleManualBook(book.id)}
-                >
-                  {book.title}
-                </button>
-              ))}
+      <div className="chat-context-stack">
+        <ContextReceiptDrawer receipt={displayedReceipt} mode={receiptMode} />
+        <details className="chat-context-controls">
+          <summary>
+            <span>连接设置</span>
+            <small>角色、预设与手动世界书</small>
+          </summary>
+          <div>
+            <label>
+              角色
+              <select
+                value={session.characterId}
+                onChange={(event) => {
+                  const character = characters.find(
+                    (item) => item.id === event.target.value,
+                  );
+                  setSession({
+                    ...session,
+                    characterId: event.target.value,
+                    presetId:
+                      character?.defaultPresetId || session.presetId,
+                  });
+                }}
+              >
+                {characters.map((character) => (
+                  <option key={character.id} value={character.id}>
+                    {character.remark || character.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              预设
+              <select
+                value={session.presetId}
+                onChange={(event) =>
+                  setSession({ ...session, presetId: event.target.value })
+                }
+              >
+                <option value="">不使用预设</option>
+                {presets.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {manualBooks.length > 0 && (
+              <div className="connection-chips">
+                {manualBooks.map((book) => (
+                  <button
+                    className={
+                      session.manualWorldbookIds.includes(book.id)
+                        ? "active"
+                        : ""
+                    }
+                    type="button"
+                    key={book.id}
+                    onClick={() => toggleManualBook(book.id)}
+                  >
+                    {book.title}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="chat-context-meta">
+              当前消息会读取 {previewBundle.worldbooks.length} 本世界书和{" "}
+              {previewBundle.memories.length} 条相关记忆，共约{" "}
+              {previewBundle.characterCount} 字。
             </div>
-          )}
-          <div className="chat-context-meta">
-            当前消息会读取 {previewBundle.worldbooks.length} 本世界书和{" "}
-            {previewBundle.memories.length} 条相关记忆，共约{" "}
-            {previewBundle.characterCount} 字。
+            <button
+              className="connection-workbench-button"
+              type="button"
+              onClick={onOpenWorkbench}
+            >
+              整理当前角色连接
+            </button>
+            <button
+              className="organize-memory-button"
+              type="button"
+              disabled={extracting || messages.length === 0}
+              onClick={() => void organizeMemories(messages, true)}
+            >
+              {extracting ? "正在整理…" : "立即整理新记忆"}
+            </button>
+            <button
+              className="clear-chat-button"
+              type="button"
+              onClick={clearChat}
+            >
+              清空当前聊天
+            </button>
           </div>
-          <button
-            className="connection-workbench-button"
-            type="button"
-            onClick={onOpenWorkbench}
-          >
-            整理当前角色连接
-          </button>
-          <button
-            className="organize-memory-button"
-            type="button"
-            disabled={extracting || messages.length === 0}
-            onClick={() => void organizeMemories(messages, true)}
-          >
-            {extracting ? "正在整理…" : "立即整理新记忆"}
-          </button>
-          <button className="clear-chat-button" type="button" onClick={clearChat}>
-            清空当前聊天
-          </button>
-        </div>
-      </details>
+        </details>
+      </div>
 
       <div className="chat-messages" ref={listRef}>
         {messages.length === 0 && (

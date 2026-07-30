@@ -3,6 +3,7 @@ import type {
   ContextBundle,
   ContextRequest,
   ContextSection,
+  WorldbookEvaluation,
 } from "../types/context";
 import type {
   CharacterCard,
@@ -39,12 +40,11 @@ function presetMatches(
   );
 }
 
-function worldbookMatches(
+function evaluateWorldbook(
   book: WorldbookEntry,
   character: CharacterCard,
   request: ContextRequest,
-) {
-  if (!book.enabled) return false;
+): WorldbookEvaluation | null {
   const boundToCharacter = character.worldbookIds.includes(book.id);
   if (
     !boundToCharacter &&
@@ -55,30 +55,85 @@ function worldbookMatches(
       request.moduleId,
     )
   ) {
-    return false;
+    return null;
   }
-  if (book.triggerMode === "always") return true;
+  const base = {
+    worldbook: book,
+    matchedKeywords: [] as string[],
+    missingKeywords: [] as string[],
+  };
+  if (!book.enabled) {
+    return { ...base, included: false, reason: "disabled" };
+  }
+  if (book.triggerMode === "always") {
+    return { ...base, included: true, reason: "always" };
+  }
   if (book.triggerMode === "manual") {
-    return request.manualWorldbookIds.includes(book.id);
+    const selected = request.manualWorldbookIds.includes(book.id);
+    return {
+      ...base,
+      included: selected,
+      reason: selected ? "manual-selected" : "manual-not-selected",
+    };
   }
   const message = book.caseSensitive
     ? request.message
     : request.message.toLocaleLowerCase();
-  const checks = book.keywords.map((keyword) =>
-    message.includes(
+  const checks = book.keywords.map((keyword) => ({
+    keyword,
+    matched: message.includes(
       book.caseSensitive ? keyword : keyword.toLocaleLowerCase(),
     ),
-  );
+  }));
+  const matchedKeywords = checks
+    .filter((check) => check.matched)
+    .map((check) => check.keyword);
+  const missingKeywords = checks
+    .filter((check) => !check.matched)
+    .map((check) => check.keyword);
+  if (checks.length === 0) {
+    return {
+      ...base,
+      included: false,
+      reason: "keywords-empty",
+    };
+  }
   const keywordMatched =
     book.keywordLogic === "all"
-      ? checks.length > 0 && checks.every(Boolean)
-      : checks.some(Boolean);
-  if (!keywordMatched) return false;
-  if (book.probability >= 100) return true;
+      ? checks.every((check) => check.matched)
+      : checks.some((check) => check.matched);
+  if (!keywordMatched) {
+    return {
+      ...base,
+      matchedKeywords,
+      missingKeywords,
+      included: false,
+      reason:
+        book.keywordLogic === "all" && matchedKeywords.length > 0
+          ? "keywords-partial"
+          : "keywords-no-match",
+    };
+  }
+  if (book.probability >= 100) {
+    return {
+      ...base,
+      matchedKeywords,
+      missingKeywords,
+      included: true,
+      reason: "keyword-match",
+    };
+  }
   const seed = `${book.id}:${request.message}`
     .split("")
     .reduce((total, value) => (total * 31 + value.charCodeAt(0)) >>> 0, 7);
-  return seed % 100 < book.probability;
+  const included = seed % 100 < book.probability;
+  return {
+    ...base,
+    matchedKeywords,
+    missingKeywords,
+    included,
+    reason: included ? "keyword-match" : "probability-miss",
+  };
 }
 
 function section(
@@ -109,8 +164,10 @@ export function buildContext(
   if (!character) {
     return {
       character: null,
+      userPersona: null,
       preset: null,
       worldbooks: [],
+      worldbookEvaluations: [],
       memories: [],
       sections: [],
       promptPreview: "",
@@ -132,8 +189,15 @@ export function buildContext(
         item.kind === "user" &&
         item.enabled,
     ) ?? null;
-  const worldbooks = snapshot.worldbooks
-    .filter((book) => worldbookMatches(book, character, request))
+  const worldbookEvaluations = snapshot.worldbooks
+    .map((book) => evaluateWorldbook(book, character, request))
+    .filter(
+      (evaluation): evaluation is WorldbookEvaluation =>
+        evaluation !== null,
+    );
+  const worldbooks = worldbookEvaluations
+    .filter((evaluation) => evaluation.included)
+    .map((evaluation) => evaluation.worldbook)
     .sort((left, right) => left.priority - right.priority);
   const memories =
     options.selectedMemories ??
@@ -224,8 +288,10 @@ export function buildContext(
 
   return {
     character,
+    userPersona,
     preset,
     worldbooks,
+    worldbookEvaluations,
     memories,
     sections,
     promptPreview,
