@@ -5,9 +5,10 @@ import type { AppId } from "../../types/phone";
 
 interface LibraryHubAppProps {
   onOpen: (appId: AppId) => void;
+  onShowGuide: () => void;
 }
 
-export function LibraryHubApp({ onOpen }: LibraryHubAppProps) {
+export function LibraryHubApp({ onOpen, onShowGuide }: LibraryHubAppProps) {
   const [snapshot, setSnapshot] = useState(() =>
     libraryRepository.exportSnapshot(),
   );
@@ -60,6 +61,15 @@ export function LibraryHubApp({ onOpen }: LibraryHubAppProps) {
       <p className="library-hub-intro">
         这里与绯界皇家图书馆彼此独立。以后可以通过导入、导出或连接功能交换资料。
       </p>
+      <button
+        type="button"
+        className="library-guide-button"
+        onClick={onShowGuide}
+      >
+        <span>新手路线</span>
+        <strong>不知道先做什么？打开首次使用引导</strong>
+        <b>→</b>
+      </button>
       <LibraryToolbar />
       <div className="library-hub-grid">
         {cards.map((card) => (

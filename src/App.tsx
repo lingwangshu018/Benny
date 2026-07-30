@@ -8,12 +8,25 @@ import { MemoryPalaceApp } from "./apps/memory/MemoryPalaceApp";
 import { PomodoroApp } from "./apps/pomodoro/PomodoroApp";
 import { AISettingsApp } from "./apps/settings/AISettingsApp";
 import { HomeScreen } from "./desktop/HomeScreen";
+import {
+  FirstUseGuide,
+  ONBOARDING_KEY,
+} from "./features/onboarding/FirstUseGuide";
 import { PhoneShell } from "./phone/PhoneShell";
+import { libraryRepository } from "./storage/libraryRepository";
 import type { AppId } from "./types/phone";
 
 export function App() {
   const [activeApp, setActiveApp] = useState<AppId | null>(null);
   const [appHistory, setAppHistory] = useState<AppId[]>([]);
+  const [showGuide, setShowGuide] = useState(() => {
+    const snapshot = libraryRepository.exportSnapshot();
+    const isEmpty =
+      snapshot.characters.length === 0 &&
+      snapshot.worldbooks.length === 0 &&
+      snapshot.presets.length === 0;
+    return isEmpty && window.localStorage.getItem(ONBOARDING_KEY) === null;
+  });
 
   function openApp(nextApp: AppId) {
     setAppHistory((history) =>
@@ -49,7 +62,12 @@ export function App() {
     if (activeApp === "预设") return <PresetApp />;
     if (activeApp === "记忆宫殿") return <MemoryPalaceApp />;
     if (activeApp === "资料库")
-      return <LibraryHubApp onOpen={openApp} />;
+      return (
+        <LibraryHubApp
+          onOpen={openApp}
+          onShowGuide={() => setShowGuide(true)}
+        />
+      );
 
     return (
       <section className="placeholder-app">
@@ -72,6 +90,12 @@ export function App() {
       >
         {activeApp ? renderActiveApp() : <HomeScreen onOpenApp={openApp} />}
       </PhoneShell>
+      {showGuide && (
+        <FirstUseGuide
+          onClose={() => setShowGuide(false)}
+          onOpen={openApp}
+        />
+      )}
     </main>
   );
 }
