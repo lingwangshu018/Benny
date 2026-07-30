@@ -63,6 +63,19 @@ export function LibraryHubApp({ onOpen, onShowGuide }: LibraryHubAppProps) {
       </p>
       <button
         type="button"
+        className="library-workbench-button"
+        onClick={() => onOpen("连接工作台")}
+      >
+        <span>◇</span>
+        <div>
+          <small>资料连接中心</small>
+          <strong>角色连接工作台</strong>
+          <p>绑定人设、世界书和预设，测试后直接开始聊天</p>
+        </div>
+        <b>→</b>
+      </button>
+      <button
+        type="button"
         className="library-guide-button"
         onClick={onShowGuide}
       >

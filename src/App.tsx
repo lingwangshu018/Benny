@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ConnectionCenterApp } from "./apps/connection/ConnectionCenterApp";
+import { RoleConnectionWorkbenchApp } from "./apps/connection/RoleConnectionWorkbenchApp";
 import { CharacterArchiveApp } from "./apps/library/CharacterArchiveApp";
 import { LibraryHubApp } from "./apps/library/LibraryHubApp";
 import { PresetApp } from "./apps/library/PresetApp";
@@ -51,8 +52,13 @@ export function App() {
   function renderActiveApp() {
     if (activeApp === "微信")
       return (
-        <ConnectionCenterApp onOpenSettings={() => openApp("设置")} />
+        <ConnectionCenterApp
+          onOpenSettings={() => openApp("设置")}
+          onOpenWorkbench={() => openApp("连接工作台")}
+        />
       );
+    if (activeApp === "连接工作台")
+      return <RoleConnectionWorkbenchApp onOpen={openApp} />;
     if (activeApp === "设置") return <AISettingsApp />;
     if (activeApp === "番茄钟") {
       return <PomodoroApp />;

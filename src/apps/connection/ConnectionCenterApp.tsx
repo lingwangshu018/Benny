@@ -14,6 +14,7 @@ import type { ContextRequest } from "../../types/context";
 
 interface ConnectionCenterAppProps {
   onOpenSettings: () => void;
+  onOpenWorkbench: () => void;
 }
 
 function messageId(role: ChatMessage["role"]) {
@@ -67,6 +68,7 @@ function messagesForCharacter(characterId: string): ChatMessage[] {
 
 export function ConnectionCenterApp({
   onOpenSettings,
+  onOpenWorkbench,
 }: ConnectionCenterAppProps) {
   const [snapshot, setSnapshot] = useState(() =>
     libraryRepository.exportSnapshot(),
@@ -360,6 +362,9 @@ export function ConnectionCenterApp({
         <div className="connection-empty">
           <strong>还没有可聊天的角色</strong>
           <p>请先回到“角色档案”创建一位 AI 角色。</p>
+          <button type="button" onClick={onOpenWorkbench}>
+            打开角色连接工作台
+          </button>
         </div>
       </section>
     );
@@ -455,6 +460,13 @@ export function ConnectionCenterApp({
             {previewBundle.memories.length} 条相关记忆，共约{" "}
             {previewBundle.characterCount} 字。
           </div>
+          <button
+            className="connection-workbench-button"
+            type="button"
+            onClick={onOpenWorkbench}
+          >
+            整理当前角色连接
+          </button>
           <button
             className="organize-memory-button"
             type="button"
