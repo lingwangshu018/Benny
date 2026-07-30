@@ -3066,6 +3066,363 @@ button {
   accent-color: #69566f;
 }
 
+.data-vault-app {
+  height: 100%;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 11px;
+  padding: 64px 16px 58px;
+  color: #34413f;
+  background:
+    radial-gradient(circle at 100% 0, #cce2df 0, transparent 35%),
+    radial-gradient(circle at 0 78%, #e2d9e9 0, transparent 38%),
+    #f3f7f6;
+  scrollbar-width: thin;
+}
+
+.vault-heading {
+  padding: 0 4px 3px;
+}
+
+.vault-heading > span {
+  color: #627d79;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.vault-heading h1 {
+  margin: 4px 0 5px;
+  color: #354744;
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.vault-heading p {
+  margin: 0;
+  color: #72827f;
+  font-size: 9px;
+}
+
+.vault-security-note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 12px;
+  border: 1px solid #d4e6e2;
+  border-radius: 17px;
+  background: #eff9f6d9;
+  box-shadow: 0 8px 22px #355b5412;
+}
+
+.vault-security-note > span {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #dbece8;
+  font-size: 15px;
+}
+
+.vault-security-note div {
+  display: grid;
+  gap: 2px;
+}
+
+.vault-security-note strong {
+  color: #44615c;
+  font-size: 10px;
+}
+
+.vault-security-note p {
+  margin: 0;
+  color: #748984;
+  font-size: 7px;
+  line-height: 1.5;
+}
+
+.vault-panel {
+  display: grid;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #ffffffd6;
+  border-radius: 19px;
+  background: #ffffffcf;
+  box-shadow: 0 10px 27px #425b5612;
+}
+
+.vault-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vault-panel > header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.vault-panel > header span {
+  color: #82908e;
+  font-size: 7px;
+}
+
+.vault-panel > header strong {
+  color: #465654;
+  font-size: 11px;
+}
+
+.vault-panel > header em {
+  padding: 4px 7px;
+  border-radius: 99px;
+  color: #7a8987;
+  background: #f0f4f3;
+  font-size: 7px;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.vault-panel > header em.healthy {
+  color: #52736a;
+  background: #e4f1ed;
+}
+
+.vault-panel > header em.damaged {
+  color: #9a5968;
+  background: #f8e9ed;
+}
+
+.vault-count-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.vault-count-grid article {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 2px;
+  border-radius: 9px;
+  background: #f1f5f4;
+}
+
+.vault-count-grid strong {
+  color: #4b5d5a;
+  font-size: 10px;
+}
+
+.vault-count-grid span {
+  color: #82918f;
+  font-size: 6px;
+}
+
+.vault-issues {
+  display: grid;
+  gap: 4px;
+}
+
+.vault-issues p {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 5px;
+  margin: 0;
+  padding: 6px 7px;
+  border-radius: 9px;
+  color: #71817f;
+  background: #f3f7f6;
+  font-size: 7px;
+  line-height: 1.45;
+}
+
+.vault-issues p > span {
+  width: 13px;
+  height: 13px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: #6f9189;
+  font-size: 8px;
+}
+
+.vault-issues p.warning {
+  color: #8a735a;
+  background: #faf4e9;
+}
+
+.vault-issues p.warning > span {
+  background: #b28b59;
+}
+
+.vault-issues p.error {
+  color: #995f6c;
+  background: #faedf0;
+}
+
+.vault-issues p.error > span {
+  background: #b76d7c;
+}
+
+.vault-primary-button,
+.vault-file-button,
+.vault-restore-button {
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(145deg, #63837c, #486963);
+  font-size: 9px;
+}
+
+.vault-file-button {
+  color: #58706c;
+  border: 1px dashed #aac1bc;
+  background: #f4faf8;
+}
+
+.vault-restore-button {
+  color: #6e5a75;
+  background: #eee6f1;
+}
+
+.vault-primary-button:disabled,
+.vault-file-button:disabled,
+.vault-restore-button:disabled,
+.vault-preview-actions button:disabled {
+  opacity: 0.42;
+}
+
+.vault-preview {
+  display: grid;
+  gap: 8px;
+}
+
+.vault-file-name {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: #f4f7f6;
+}
+
+.vault-file-name strong {
+  overflow: hidden;
+  color: #52635f;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vault-file-name span {
+  color: #899593;
+  font-size: 7px;
+}
+
+.vault-preview-actions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px;
+}
+
+.vault-preview-actions button {
+  min-height: 33px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 11px;
+  color: #776c79;
+  background: #efebf0;
+  font-size: 8px;
+}
+
+.vault-preview-actions button.confirm {
+  color: white;
+  background: #58766f;
+}
+
+.vault-empty-note {
+  margin: 0;
+  padding: 15px 10px;
+  border-radius: 12px;
+  color: #879391;
+  background: #f5f7f7;
+  text-align: center;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+.vault-storage-bar {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e7eeec;
+}
+
+.vault-storage-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6c9188, #9a83a1);
+}
+
+.vault-storage-total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  color: #667975;
+  font-size: 8px;
+}
+
+.vault-storage-total span {
+  color: #929d9b;
+}
+
+.vault-storage-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+.vault-storage-list p {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid #edf1f0;
+  color: #82908e;
+  font-size: 7px;
+}
+
+.vault-storage-list strong {
+  color: #5e706c;
+  font-weight: 500;
+}
+
+.vault-status {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid #ffffffd4;
+  border-radius: 12px;
+  color: #5d746f;
+  background: #f8fbfae8;
+  box-shadow: 0 5px 18px #405a5517;
+  text-align: center;
+  font-size: 8px;
+  backdrop-filter: blur(10px);
+}
+
 @media (max-height: 700px) {
   .world-widget {
     min-height: 140px;

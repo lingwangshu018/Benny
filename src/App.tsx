@@ -8,6 +8,7 @@ import { WorldbookApp } from "./apps/library/WorldbookApp";
 import { MemoryPalaceApp } from "./apps/memory/MemoryPalaceApp";
 import { PomodoroApp } from "./apps/pomodoro/PomodoroApp";
 import { AISettingsApp } from "./apps/settings/AISettingsApp";
+import { DataVaultApp } from "./apps/vault/DataVaultApp";
 import { HomeScreen } from "./desktop/HomeScreen";
 import {
   FirstUseGuide,
@@ -67,6 +68,7 @@ export function App() {
     if (activeApp === "世界书") return <WorldbookApp />;
     if (activeApp === "预设") return <PresetApp />;
     if (activeApp === "记忆宫殿") return <MemoryPalaceApp />;
+    if (activeApp === "数据保险箱") return <DataVaultApp />;
     if (activeApp === "资料库")
       return (
         <LibraryHubApp

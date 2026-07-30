@@ -12,6 +12,7 @@ const firstPageApps: PhoneApp[] = [
   { id: "角色档案", legacyPage: "characters", icon: "♙", accent: "#9877b7" },
   { id: "记忆宫殿", legacyPage: "memorypalace", icon: "♜", accent: "#7087b9" },
   { id: "资料库", legacyPage: "library", icon: "▤", accent: "#956d58" },
+  { id: "数据保险箱", legacyPage: "vault", icon: "◆", accent: "#4f7b78" },
   { id: "短信", legacyPage: "sms", icon: "●", accent: "#79a9c7" },
 ];
 
