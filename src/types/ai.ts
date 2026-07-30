@@ -18,8 +18,38 @@ export interface AISettings {
 
 export type ChatRole = "user" | "assistant";
 
+export interface ChatMessageVersion {
+  id: string;
+  content: string;
+  createdAt: number;
+}
+
 export interface ChatMessage {
   id: string;
+  role: ChatRole;
+  content: string;
+  createdAt: number;
+  versions?: ChatMessageVersion[];
+  activeVersion?: number;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
+export interface CharacterChatState {
+  activeSessionId: string;
+  sessions: ChatSession[];
+}
+
+export interface ChatSearchHit {
+  sessionId: string;
+  sessionTitle: string;
+  messageId: string;
   role: ChatRole;
   content: string;
   createdAt: number;

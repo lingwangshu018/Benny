@@ -13,8 +13,14 @@ import { contextSessionRepository } from "../../storage/contextSessionRepository
 import { libraryRepository } from "../../storage/libraryRepository";
 import { memoryExtractionRepository } from "../../storage/memoryExtractionRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
-import type { ChatMessage } from "../../types/ai";
+import type {
+  CharacterChatState,
+  ChatMessage,
+  ChatSearchHit,
+} from "../../types/ai";
 import type { ContextRequest } from "../../types/context";
+import { ChatMessageCard } from "./ChatMessageCard";
+import { ChatSessionTools } from "./ChatSessionTools";
 import { ContextReceiptDrawer } from "./ContextReceiptDrawer";
 
 interface ConnectionCenterAppProps {
@@ -82,6 +88,9 @@ export function ConnectionCenterApp({
   const [messages, setMessages] = useState<ChatMessage[]>(() =>
     messagesForCharacter(session.characterId),
   );
+  const [chatState, setChatState] = useState<CharacterChatState>(() =>
+    chatRepository.state(session.characterId),
+  );
   const [characterMemories, setCharacterMemories] = useState(() =>
     memoryRepository.forCharacter(session.characterId),
   );
@@ -91,6 +100,11 @@ export function ConnectionCenterApp({
   const [extracting, setExtracting] = useState(false);
   const [memoryStatus, setMemoryStatus] = useState("");
   const [lastReceipt, setLastReceipt] = useState<ContextReceipt | null>(null);
+  const [sendingMessageId, setSendingMessageId] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchHits, setSearchHits] = useState<ChatSearchHit[]>([]);
+  const [focusedMessageId, setFocusedMessageId] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -107,10 +121,15 @@ export function ConnectionCenterApp({
 
   useEffect(() => {
     setMessages(messagesForCharacter(session.characterId));
+    setChatState(chatRepository.state(session.characterId));
     setCharacterMemories(
       memoryRepository.forCharacter(session.characterId),
     );
     setMemoryStatus("");
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchHits([]);
+    setFocusedMessageId("");
   }, [session.characterId]);
 
   useEffect(() => {
@@ -137,6 +156,14 @@ export function ConnectionCenterApp({
       behavior: "smooth",
     });
   }, [messages]);
+
+  useEffect(() => {
+    if (!focusedMessageId) return;
+    const target = listRef.current?.querySelector<HTMLElement>(
+      `[data-message-id="${focusedMessageId}"]`,
+    );
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [focusedMessageId, messages]);
 
   const characters = snapshot.characters.filter(
     (item) => item.enabled && item.kind !== "user",
@@ -185,10 +212,16 @@ export function ConnectionCenterApp({
   const displayedReceipt =
     draft.trim() || !lastReceipt ? previewReceipt : lastReceipt;
   const receiptMode = draft.trim() || !lastReceipt ? "preview" : "sent";
+  const latestUserMessageId =
+    [...messages].reverse().find((message) => message.role === "user")
+      ?.id ?? "";
+  const activeSessionId = chatState.activeSessionId;
+  const extractionKey = `${session.characterId}:${activeSessionId || "default"}`;
 
   function saveMessages(next: ChatMessage[]) {
-    setMessages(next);
-    chatRepository.save(session.characterId, next);
+    const saved = chatRepository.save(session.characterId, next);
+    setMessages(saved);
+    setChatState(chatRepository.state(session.characterId));
   }
 
   function toggleManualBook(bookId: string) {
@@ -208,7 +241,7 @@ export function ConnectionCenterApp({
     const currentSettings = aiSettingsRepository.read();
     if (!currentSettings.baseUrl || !currentSettings.model) return;
     const processedCount =
-      memoryExtractionRepository.processedCount(session.characterId);
+      memoryExtractionRepository.processedCount(extractionKey);
     let pending = sourceMessages.slice(processedCount);
     const pendingRounds = pending.filter(
       (message) => message.role === "user",
@@ -242,7 +275,7 @@ export function ConnectionCenterApp({
         pending.at(-1)?.id ?? "",
       );
       memoryExtractionRepository.markProcessed(
-        session.characterId,
+        extractionKey,
         sourceMessages.length,
       );
       let vectorNote = "";
@@ -271,33 +304,22 @@ export function ConnectionCenterApp({
     }
   }
 
-  async function send() {
-    const content = draft.trim();
-    if (!content || sending || !activeCharacter) return;
+  async function generateReply(
+    requestMessages: ChatMessage[],
+    baseMessages: ChatMessage[],
+    targetAssistantId: string,
+    content: string,
+    regeneration: boolean,
+  ) {
+    if (sending || !activeCharacter) return;
     const settings = aiSettingsRepository.read();
     if (!settings.baseUrl || !settings.model) {
       setError("请先在 AI 设置中填写接口地址和模型");
       return;
     }
-
-    const userMessage: ChatMessage = {
-      id: messageId("user"),
-      role: "user",
-      content,
-      createdAt: Date.now(),
-    };
-    const assistantMessage: ChatMessage = {
-      id: messageId("assistant"),
-      role: "assistant",
-      content: "",
-      createdAt: Date.now(),
-    };
-    const requestMessages = [...messages, userMessage];
-    const visibleMessages = [...requestMessages, assistantMessage];
-    saveMessages(visibleMessages);
-    setDraft("");
     setError("");
     setSending(true);
+    setSendingMessageId(targetAssistantId);
     const controller = new AbortController();
     abortRef.current = controller;
 
@@ -345,58 +367,223 @@ export function ConnectionCenterApp({
         settings,
         systemPrompt: context.promptPreview,
         messages: modelMessages,
-        generation: selectedPreset
+        generation: context.preset
           ? {
-              temperature: selectedPreset.temperature ?? undefined,
-              topP: selectedPreset.topP ?? undefined,
-              maxTokens: selectedPreset.maxTokens ?? undefined,
+              temperature: context.preset.temperature ?? undefined,
+              topP: context.preset.topP ?? undefined,
+              maxTokens: context.preset.maxTokens ?? undefined,
             }
           : undefined,
         signal: controller.signal,
         onToken: (fullText) => {
-          const next = visibleMessages.map((message) =>
-            message.id === assistantMessage.id
-              ? { ...message, content: fullText }
-              : message,
+          setMessages((current) =>
+            current.map((message) =>
+              message.id === targetAssistantId
+                ? { ...message, content: fullText }
+                : message,
+            ),
           );
-          saveMessages(next);
         },
       });
-      const next = visibleMessages.map((message) =>
-        message.id === assistantMessage.id
-          ? { ...message, content: response }
-          : message,
-      );
-      saveMessages(next);
-      void organizeMemories(next, false);
+      const next = regeneration
+        ? chatRepository.addReplyVersion(
+            session.characterId,
+            targetAssistantId,
+            response,
+          )
+        : chatRepository.save(
+            session.characterId,
+            baseMessages.map((message) =>
+              message.id === targetAssistantId
+                ? { ...message, content: response }
+                : message,
+            ),
+          );
+      setMessages(next);
+      setChatState(chatRepository.state(session.characterId));
+      if (!regeneration) void organizeMemories(next, false);
     } catch (caught) {
       if (controller.signal.aborted) {
         setError("已停止生成");
       } else {
         setError(caught instanceof Error ? caught.message : "发送失败");
       }
-      const current = chatRepository.messages(session.characterId);
-      saveMessages(
-        current.filter(
+      if (!regeneration) {
+        const current = chatRepository.messages(session.characterId);
+        const next = current.filter(
           (message) =>
-            message.id !== assistantMessage.id || message.content.trim(),
-        ),
-      );
+            message.id !== targetAssistantId || message.content.trim(),
+        );
+        saveMessages(next);
+      } else {
+        setMessages(chatRepository.messages(session.characterId));
+      }
     } finally {
       abortRef.current = null;
       setSending(false);
+      setSendingMessageId("");
     }
+  }
+
+  async function send() {
+    const content = draft.trim();
+    if (!content || sending || !activeCharacter) return;
+    const settings = aiSettingsRepository.read();
+    if (!settings.baseUrl || !settings.model) {
+      setError("请先在 AI 设置中填写接口地址和模型");
+      return;
+    }
+    const userMessage: ChatMessage = {
+      id: messageId("user"),
+      role: "user",
+      content,
+      createdAt: Date.now(),
+    };
+    const assistantMessage: ChatMessage = {
+      id: messageId("assistant"),
+      role: "assistant",
+      content: "",
+      createdAt: Date.now(),
+    };
+    const requestMessages = [...messages, userMessage];
+    const visibleMessages = [...requestMessages, assistantMessage];
+    saveMessages(visibleMessages);
+    setDraft("");
+    await generateReply(
+      requestMessages,
+      visibleMessages,
+      assistantMessage.id,
+      content,
+      false,
+    );
+  }
+
+  async function regenerateReply(messageId: string) {
+    const assistantIndex = messages.findIndex(
+      (message) =>
+        message.id === messageId && message.role === "assistant",
+    );
+    if (assistantIndex < 0) return;
+    const requestMessages = messages.slice(0, assistantIndex);
+    const userMessage = [...requestMessages]
+      .reverse()
+      .find((message) => message.role === "user");
+    if (!userMessage) {
+      setError("这条回复前没有可用于重新生成的用户消息");
+      return;
+    }
+    await generateReply(
+      requestMessages,
+      messages,
+      messageId,
+      userMessage.content,
+      true,
+    );
   }
 
   function stop() {
     abortRef.current?.abort();
   }
 
+  function editLatestMessage(messageId: string, content: string) {
+    const next = chatRepository.editLatestUserMessage(
+      session.characterId,
+      messageId,
+      content,
+    );
+    setMessages(next);
+    setChatState(chatRepository.state(session.characterId));
+    setMemoryStatus("上一条消息已修改，可重新生成角色回复");
+  }
+
+  function deleteMessage(messageId: string) {
+    if (!window.confirm("删除这一条消息吗？")) return;
+    const next = chatRepository.removeMessage(
+      session.characterId,
+      messageId,
+    );
+    setMessages(next);
+    setChatState(chatRepository.state(session.characterId));
+  }
+
+  function changeReplyVersion(messageId: string, direction: -1 | 1) {
+    const next = chatRepository.selectReplyVersion(
+      session.characterId,
+      messageId,
+      direction,
+    );
+    setMessages(next);
+    setChatState(chatRepository.state(session.characterId));
+  }
+
+  function newChatSession() {
+    const created = chatRepository.newSession(session.characterId);
+    if (!created) return;
+    const next = messagesForCharacter(session.characterId);
+    setMessages(next);
+    setChatState(chatRepository.state(session.characterId));
+    setLastReceipt(null);
+    setError("");
+    setMemoryStatus("已新建会话，角色记忆仍会继续使用");
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchHits([]);
+  }
+
+  function selectChatSession(sessionId: string) {
+    const selected = chatRepository.activate(
+      session.characterId,
+      sessionId,
+    );
+    if (!selected) return;
+    setMessages(messagesForCharacter(session.characterId));
+    setChatState(chatRepository.state(session.characterId));
+    setLastReceipt(null);
+    setError("");
+    setMemoryStatus("");
+    setFocusedMessageId("");
+  }
+
+  function searchChats(query: string) {
+    setSearchQuery(query);
+    setSearchHits(chatRepository.search(session.characterId, query));
+  }
+
+  function selectSearchHit(hit: ChatSearchHit) {
+    selectChatSession(hit.sessionId);
+    setFocusedMessageId(hit.messageId);
+    setSearchOpen(false);
+  }
+
+  function exportCharacterChat() {
+    if (!activeCharacter) return;
+    const name = activeCharacter.remark || activeCharacter.name;
+    const payload = chatRepository.exportCharacter(
+      activeCharacter.id,
+      name,
+    );
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${name.replace(/[\\/:*?"<>|]/g, "_")}_聊天记录_${
+      new Date().toISOString().slice(0, 10)
+    }.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    setMemoryStatus(`已导出 ${name} 的 ${payload.sessions.length} 个会话`);
+  }
+
   function clearChat() {
-    if (!window.confirm("清空与当前角色的聊天记录吗？")) return;
+    if (!window.confirm("清空当前会话吗？角色记忆不会被删除。")) return;
     chatRepository.clear(session.characterId);
-    memoryExtractionRepository.reset(session.characterId);
+    memoryExtractionRepository.reset(extractionKey);
     setMessages([]);
+    setChatState(chatRepository.state(session.characterId));
     setLastReceipt(null);
   }
 
@@ -432,6 +619,20 @@ export function ConnectionCenterApp({
           ⚙
         </button>
       </header>
+
+      <ChatSessionTools
+        state={chatState}
+        busy={sending}
+        searchOpen={searchOpen}
+        searchQuery={searchQuery}
+        searchHits={searchHits}
+        onToggleSearch={() => setSearchOpen((current) => !current)}
+        onSearch={searchChats}
+        onNewSession={newChatSession}
+        onSelectSession={selectChatSession}
+        onSelectHit={selectSearchHit}
+        onExport={exportCharacterChat}
+      />
 
       <div className="chat-context-stack">
         <ContextReceiptDrawer receipt={displayedReceipt} mode={receiptMode} />
@@ -537,19 +738,26 @@ export function ConnectionCenterApp({
             <p>第一句话会自动带上当前角色、预设和相关世界书。</p>
           </div>
         )}
-        {messages.map((message) => (
-          <article className={`chat-message ${message.role}`} key={message.id}>
-            <p>
-              {message.content ||
-                (message.role === "assistant" && sending ? "…" : "")}
-            </p>
-            <time>
-              {new Date(message.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </time>
-          </article>
+        {messages.map((message, index) => (
+          <ChatMessageCard
+            key={message.id}
+            message={message}
+            isLatestUser={message.id === latestUserMessageId}
+            canRegenerate={messages
+              .slice(0, index)
+              .some((item) => item.role === "user")}
+            busy={sending}
+            generating={sending && message.id === sendingMessageId}
+            highlighted={message.id === focusedMessageId}
+            onEdit={(content) =>
+              editLatestMessage(message.id, content)
+            }
+            onDelete={() => deleteMessage(message.id)}
+            onRegenerate={() => void regenerateReply(message.id)}
+            onChangeVersion={(direction) =>
+              changeReplyVersion(message.id, direction)
+            }
+          />
         ))}
       </div>
 

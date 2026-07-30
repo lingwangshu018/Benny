@@ -2120,7 +2120,7 @@ button {
 .chat-app {
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
   padding: 46px 12px 38px;
   color: #3e3542;
   background:
@@ -2174,6 +2174,117 @@ button {
   border-radius: 50%;
   color: #685a6c;
   background: #ffffffb8;
+}
+
+.chat-session-tools {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.chat-session-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: end;
+  gap: 5px;
+}
+
+.chat-session-row label {
+  display: grid;
+  gap: 2px;
+  color: #877a8a;
+  font-size: 7px;
+}
+
+.chat-session-row select {
+  min-width: 0;
+  height: 29px;
+  padding: 0 7px;
+  border: 1px solid #ffffffd4;
+  border-radius: 10px;
+  color: #5e5263;
+  background: #ffffffb8;
+  font-size: 8px;
+}
+
+.chat-session-row > button {
+  height: 29px;
+  padding: 0 7px;
+  border: 1px solid #ffffffd4;
+  border-radius: 10px;
+  color: #685b6d;
+  background: #ffffffb8;
+  font-size: 7px;
+  white-space: nowrap;
+}
+
+.chat-session-row button:disabled,
+.chat-session-row select:disabled {
+  opacity: 0.45;
+}
+
+.chat-search-panel {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ffffffd9;
+  border-radius: 13px;
+  background: #f9f7f9ee;
+  box-shadow: 0 8px 22px #51465916;
+}
+
+.chat-search-panel > input {
+  width: 100%;
+  padding: 8px 9px;
+  border: 1px solid #ddd5df;
+  border-radius: 9px;
+  outline: 0;
+  background: white;
+  font-size: 9px;
+}
+
+.chat-search-panel > p {
+  margin: 0;
+  padding: 7px;
+  color: #938897;
+  text-align: center;
+  font-size: 8px;
+}
+
+.chat-search-panel > div {
+  max-height: 155px;
+  overflow-y: auto;
+  display: grid;
+  gap: 5px;
+}
+
+.chat-search-panel > div > button {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 7px;
+  padding: 7px 8px;
+  border: 1px solid #eee7ef;
+  border-radius: 9px;
+  text-align: left;
+  background: white;
+}
+
+.chat-search-panel button span,
+.chat-search-panel button small {
+  color: #958a98;
+  font-size: 7px;
+}
+
+.chat-search-panel button strong {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: #5f5364;
+  font-size: 8px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-context-stack {
@@ -2498,6 +2609,16 @@ button {
   border-radius: 16px 16px 16px 5px;
   background: #ffffffe6;
   box-shadow: 0 7px 18px #5b4c6112;
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.chat-message.highlighted {
+  box-shadow:
+    0 0 0 2px #a891b4,
+    0 9px 24px #5b4c6124;
+  transform: translateY(-1px);
 }
 
 .chat-message.user {
@@ -2525,6 +2646,92 @@ button {
 
 .chat-message.user time {
   color: #ffffffa6;
+}
+
+.chat-message-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.chat-message-footer time {
+  margin: 0;
+}
+
+.chat-message-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 3px;
+}
+
+.chat-message-actions > button,
+.chat-version-switcher button {
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 99px;
+  color: #786b7c;
+  background: #eee8ef;
+  font-size: 6px;
+}
+
+.chat-message.user .chat-message-actions > button {
+  color: #fff;
+  background: #ffffff24;
+}
+
+.chat-message-actions button:disabled {
+  opacity: 0.4;
+}
+
+.chat-version-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #897d8c;
+  font-size: 6px;
+}
+
+.chat-version-switcher b {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.chat-message-editor {
+  display: grid;
+  gap: 6px;
+}
+
+.chat-message-editor textarea {
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #ffffff75;
+  border-radius: 9px;
+  outline: 0;
+  color: #4f4354;
+  background: #ffffffeb;
+  font: inherit;
+  font-size: 10px;
+  resize: vertical;
+}
+
+.chat-message-editor > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.chat-message-editor button {
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 99px;
+  color: #65596a;
+  background: #ffffffcf;
+  font-size: 7px;
 }
 
 .chat-error {
