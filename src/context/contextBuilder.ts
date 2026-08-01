@@ -12,6 +12,7 @@ import type {
   WorldbookEntry,
 } from "../types/library";
 import type { CharacterMemory } from "../types/memory";
+import type { LifeEvent } from "../types/life";
 import { memoryEngine } from "../memory/memoryEngine";
 
 function scopeMatches(
@@ -146,6 +147,17 @@ function section(
   return { position, title, content, sourceId, sourceType };
 }
 
+function lifeEventText(event: LifeEvent) {
+  return [
+    event.title,
+    event.content,
+    event.mood ? `当时的情绪：${event.mood}` : "",
+    `发生时间：${new Date(event.eventAt).toLocaleString("zh-CN")}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function buildContext(
   snapshot: {
     characters: CharacterCard[];
@@ -169,6 +181,7 @@ export function buildContext(
       worldbooks: [],
       worldbookEvaluations: [],
       memories: [],
+      lifeEvents: [],
       sections: [],
       promptPreview: "",
       characterCount: 0,
@@ -208,6 +221,7 @@ export function buildContext(
       request.message,
       options.memoryLimit ?? 6,
     );
+  const lifeEvents = options.selectedLifeEvents ?? [];
 
   const sections: ContextSection[] = [];
   if (preset) {
@@ -247,6 +261,17 @@ export function buildContext(
         memory.content,
         memory.id,
         "memory",
+      ),
+    );
+  }
+  for (const event of lifeEvents) {
+    sections.push(
+      section(
+        "timeline",
+        `共同生活 · ${event.title || "一段记录"}`,
+        lifeEventText(event),
+        event.id,
+        "life-event",
       ),
     );
   }
@@ -293,6 +318,7 @@ export function buildContext(
     worldbooks,
     worldbookEvaluations,
     memories,
+    lifeEvents,
     sections,
     promptPreview,
     characterCount: promptPreview.length,

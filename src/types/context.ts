@@ -6,6 +6,7 @@ import type {
   WorldbookEntry,
 } from "./library";
 import type { CharacterMemory } from "./memory";
+import type { LifeEvent } from "./life";
 
 export interface ContextRequest {
   characterId: string;
@@ -16,11 +17,21 @@ export interface ContextRequest {
 }
 
 export interface ContextSection {
-  position: InjectionPosition | "preset" | "character" | "memory";
+  position:
+    | InjectionPosition
+    | "preset"
+    | "character"
+    | "memory"
+    | "timeline";
   title: string;
   content: string;
   sourceId: string;
-  sourceType: "preset" | "character" | "worldbook" | "memory";
+  sourceType:
+    | "preset"
+    | "character"
+    | "worldbook"
+    | "memory"
+    | "life-event";
 }
 
 export type WorldbookEvaluationReason =
@@ -49,6 +60,7 @@ export interface ContextBundle {
   worldbooks: WorldbookEntry[];
   worldbookEvaluations: WorldbookEvaluation[];
   memories: CharacterMemory[];
+  lifeEvents: LifeEvent[];
   sections: ContextSection[];
   promptPreview: string;
   characterCount: number;
@@ -61,4 +73,5 @@ export interface ContextSource {
 export interface ContextBuildOptions {
   memoryLimit?: number;
   selectedMemories?: CharacterMemory[];
+  selectedLifeEvents?: LifeEvent[];
 }

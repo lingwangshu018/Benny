@@ -3728,6 +3728,35 @@ button {
   gap: 10px;
 }
 
+.sms-contact-main {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.sms-ai-ready,
+.sms-ai-missing {
+  overflow: hidden;
+  padding-left: 1px;
+  color: #668d7d;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sms-ai-missing {
+  color: #b3757b;
+}
+
+.sms-settings-callout {
+  min-height: 34px;
+  border: 1px solid #cfdde4;
+  border-radius: 12px;
+  color: #56798c;
+  background: #eef6f9;
+  font-size: 8px;
+}
+
 .sms-thread {
   min-height: 210px;
   display: flex;
@@ -3790,6 +3819,93 @@ button {
   background: #f2ebf3;
 }
 
+.sms-reply-preview {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #cbdce5;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #fafdff, #edf5f8);
+  box-shadow: 0 10px 24px #536f7e18;
+}
+
+.sms-reply-preview > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sms-reply-preview > header span {
+  color: #536f80;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.sms-reply-preview > header em {
+  color: #8b9da7;
+  font-size: 6px;
+  font-style: normal;
+}
+
+.sms-reply-preview > p {
+  min-height: 44px;
+  margin: 0;
+  padding: 10px;
+  border-radius: 12px;
+  color: #545b61;
+  background: #ffffffd6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.sms-reply-preview > p.placeholder,
+.sms-reply-preview > small {
+  color: #87959d;
+}
+
+.sms-reply-preview > small {
+  font-size: 7px;
+}
+
+.sms-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sms-preview-actions button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d7e1e6;
+  border-radius: 10px;
+  color: #677781;
+  background: white;
+  font-size: 7px;
+}
+
+.sms-preview-actions button.primary {
+  border-color: var(--life-accent);
+  color: white;
+  background: var(--life-accent);
+}
+
+.sms-preview-actions button:disabled {
+  opacity: 0.4;
+}
+
+.sms-error {
+  margin: 0;
+  padding: 9px 10px;
+  border-radius: 11px;
+  color: #9f5058;
+  background: #f9e7e9;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
 .sms-composer {
   position: sticky;
   bottom: 4px;
@@ -3802,6 +3918,11 @@ button {
   background: #ffffffea;
   box-shadow: 0 9px 24px #4d45531c;
   backdrop-filter: blur(10px);
+}
+
+.sms-composer > small {
+  color: #84949c;
+  font-size: 7px;
 }
 
 .sms-direction {

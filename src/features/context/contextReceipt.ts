@@ -18,6 +18,7 @@ export interface ContextReceipt {
   preset: ContextReceiptItem | null;
   matchedWorldbooks: ContextReceiptItem[];
   memories: ContextReceiptItem[];
+  lifeEvents: ContextReceiptItem[];
   skippedWorldbooks: ContextReceiptItem[];
   historyCount: number;
   historyLimit: number;
@@ -130,6 +131,11 @@ export const contextReceipt = {
         id: memory.id,
         title: memory.title,
         detail: `${memoryKindLabels[memory.kind]} · 重要度 ${memory.importance}`,
+      })),
+      lifeEvents: bundle.lifeEvents.map((event) => ({
+        id: event.id,
+        title: event.title || "一段共同生活",
+        detail: `${new Date(event.eventAt).toLocaleDateString("zh-CN")} · 已读取生活时间线`,
       })),
       skippedWorldbooks,
       historyCount: options.historyMessages.length,

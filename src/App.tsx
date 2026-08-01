@@ -75,7 +75,8 @@ export function App() {
     if (activeApp === "记忆宫殿") return <MemoryPalaceApp />;
     if (activeApp === "数据保险箱") return <DataVaultApp />;
     if (activeApp === "朋友圈") return <MomentsApp />;
-    if (activeApp === "短信") return <SmsApp />;
+    if (activeApp === "短信")
+      return <SmsApp onOpenSettings={() => openApp("设置")} />;
     if (activeApp === "日记") return <DiaryApp />;
     if (activeApp === "相册") return <AlbumApp />;
     if (activeApp === "情侣空间") return <CoupleSpaceApp />;

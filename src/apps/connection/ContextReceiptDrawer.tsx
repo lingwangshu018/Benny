@@ -57,7 +57,7 @@ export function ContextReceiptDrawer({
           <small>{mode === "preview" ? "输入预览" : "最近一次发送"}</small>
         </span>
         <em>
-          {receipt.matchedWorldbooks.length} 本书 · {receipt.memories.length} 条记忆
+          {receipt.matchedWorldbooks.length} 本书 · {receipt.memories.length} 条记忆 · {receipt.lifeEvents.length} 段生活
         </em>
       </summary>
       <div className="context-receipt-body">
@@ -100,6 +100,17 @@ export function ContextReceiptDrawer({
           <ReceiptList
             items={receipt.matchedWorldbooks}
             empty="本次没有世界书被触发"
+          />
+        </section>
+
+        <section>
+          <header>
+            近期共同生活
+            <small>{receipt.lifeEvents.length}</small>
+          </header>
+          <ReceiptList
+            items={receipt.lifeEvents}
+            empty="本次没有读取共同生活记录"
           />
         </section>
 
