@@ -13,6 +13,7 @@ import { contextSessionRepository } from "../../storage/contextSessionRepository
 import { libraryRepository } from "../../storage/libraryRepository";
 import { memoryExtractionRepository } from "../../storage/memoryExtractionRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
+import { relationshipRepository } from "../../storage/relationshipRepository";
 import type {
   CharacterChatState,
   ChatMessage,
@@ -94,6 +95,9 @@ export function ConnectionCenterApp({
   const [characterMemories, setCharacterMemories] = useState(() =>
     memoryRepository.forCharacter(session.characterId),
   );
+  const [relationshipProfile, setRelationshipProfile] = useState(() =>
+    relationshipRepository.forCharacter(session.characterId),
+  );
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -125,11 +129,24 @@ export function ConnectionCenterApp({
     setCharacterMemories(
       memoryRepository.forCharacter(session.characterId),
     );
+    setRelationshipProfile(
+      relationshipRepository.forCharacter(session.characterId),
+    );
     setMemoryStatus("");
     setSearchOpen(false);
     setSearchQuery("");
     setSearchHits([]);
     setFocusedMessageId("");
+  }, [session.characterId]);
+
+  useEffect(() => {
+    const reload = () =>
+      setRelationshipProfile(
+        relationshipRepository.forCharacter(session.characterId),
+      );
+    window.addEventListener(relationshipRepository.changeEvent, reload);
+    return () =>
+      window.removeEventListener(relationshipRepository.changeEvent, reload);
   }, [session.characterId]);
 
   useEffect(() => {
@@ -183,9 +200,16 @@ export function ConnectionCenterApp({
       buildContext(
         { ...snapshot, memories: characterMemories },
         { ...session, message: draft },
-        { memoryLimit: effectiveMemoryLimit },
+        { memoryLimit: effectiveMemoryLimit, relationshipProfile },
       ),
-    [snapshot, characterMemories, session, draft, effectiveMemoryLimit],
+    [
+      snapshot,
+      characterMemories,
+      session,
+      draft,
+      effectiveMemoryLimit,
+      relationshipProfile,
+    ],
   );
   const activeCharacter = previewBundle.character;
   const aiReady = Boolean(settings.baseUrl && settings.model);
@@ -347,6 +371,7 @@ export function ConnectionCenterApp({
         {
           memoryLimit: effectiveMemoryLimit,
           selectedMemories: retrieval.memories,
+          relationshipProfile,
         },
       );
       const historyLimit =

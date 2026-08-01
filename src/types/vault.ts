@@ -6,6 +6,7 @@ import type {
 } from "./library";
 import type { CharacterMemory } from "./memory";
 import type { LifeEvent } from "./life";
+import type { RelationshipProfile } from "./relationship";
 
 export interface VaultPayload {
   characters: CharacterCard[];
@@ -18,12 +19,13 @@ export interface VaultPayload {
   memories: CharacterMemory[];
   memoryExtractionState: Record<string, number>;
   timeline: LifeEvent[];
+  relationshipProfiles: RelationshipProfile[];
 }
 
 export interface VaultArchive {
   kind: "bunny-data-vault";
   schemaVersion: 1;
-  appVersion: "0.16" | "0.17";
+  appVersion: "0.16" | "0.17" | "0.19";
   createdAt: number;
   payload: VaultPayload;
   integrity: {
@@ -41,6 +43,7 @@ export interface VaultCounts {
   chatMessages: number;
   memories: number;
   timelineEvents: number;
+  relationshipProfiles: number;
 }
 
 export interface VaultIssue {

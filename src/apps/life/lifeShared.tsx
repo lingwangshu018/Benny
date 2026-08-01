@@ -13,6 +13,7 @@ export const lifeKindMeta: Record<
   diary: { label: "日记", icon: "✎" },
   photo: { label: "照片", icon: "▧" },
   couple: { label: "共同里程碑", icon: "♡" },
+  relationship: { label: "关系成长", icon: "↗" },
 };
 
 function availableCharacters() {

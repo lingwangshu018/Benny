@@ -13,6 +13,7 @@ import type {
 } from "../types/library";
 import type { CharacterMemory } from "../types/memory";
 import type { LifeEvent } from "../types/life";
+import type { RelationshipProfile } from "../types/relationship";
 import { memoryEngine } from "../memory/memoryEngine";
 
 function scopeMatches(
@@ -158,6 +159,25 @@ function lifeEventText(event: LifeEvent) {
     .join("\n");
 }
 
+const relationshipStageLabels = {
+  stranger: "初识",
+  familiar: "熟悉",
+  close: "亲近",
+  ambiguous: "暧昧",
+  committed: "相守",
+} as const;
+
+function relationshipText(profile: RelationshipProfile) {
+  const { metrics } = profile;
+  return [
+    `关系阶段：${relationshipStageLabels[profile.stage]}`,
+    `亲密 ${metrics.intimacy} / 信任 ${metrics.trust} / 心动 ${metrics.attraction} / 安心 ${metrics.security} / 矛盾 ${metrics.conflict}`,
+    `当前关系：${profile.summary}`,
+    `彼此印象：${profile.impression}`,
+    "关系档案是既有事实与相处基调，不要擅自改写数值或宣布关系升级。",
+  ].join("\n");
+}
+
 export function buildContext(
   snapshot: {
     characters: CharacterCard[];
@@ -182,6 +202,7 @@ export function buildContext(
       worldbookEvaluations: [],
       memories: [],
       lifeEvents: [],
+      relationshipProfile: null,
       sections: [],
       promptPreview: "",
       characterCount: 0,
@@ -222,6 +243,7 @@ export function buildContext(
       options.memoryLimit ?? 6,
     );
   const lifeEvents = options.selectedLifeEvents ?? [];
+  const relationshipProfile = options.relationshipProfile ?? null;
 
   const sections: ContextSection[] = [];
   if (preset) {
@@ -261,6 +283,17 @@ export function buildContext(
         memory.content,
         memory.id,
         "memory",
+      ),
+    );
+  }
+  if (relationshipProfile) {
+    sections.push(
+      section(
+        "relationship",
+        "关系档案",
+        relationshipText(relationshipProfile),
+        relationshipProfile.characterId,
+        "relationship",
       ),
     );
   }
@@ -319,6 +352,7 @@ export function buildContext(
     worldbookEvaluations,
     memories,
     lifeEvents,
+    relationshipProfile,
     sections,
     promptPreview,
     characterCount: promptPreview.length,

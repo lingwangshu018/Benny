@@ -10,6 +10,7 @@ import { contextSessionRepository } from "../../storage/contextSessionRepository
 import { libraryRepository } from "../../storage/libraryRepository";
 import { lifeTimelineRepository } from "../../storage/lifeTimelineRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
+import { relationshipRepository } from "../../storage/relationshipRepository";
 import type { ChatMessage } from "../../types/ai";
 import type { LifeEvent } from "../../types/life";
 
@@ -149,6 +150,7 @@ export const lifeInteractionEngine = {
         memoryLimit: preset?.memoryLimit || settings.memoryLimit,
         selectedMemories: retrieval.memories,
         selectedLifeEvents: recentLifeEvents,
+        relationshipProfile: relationshipRepository.forCharacter(character.id),
       },
     );
     const sceneInstruction = `【生活场景 · 短信】

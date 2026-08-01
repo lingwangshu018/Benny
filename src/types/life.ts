@@ -3,7 +3,8 @@ export type LifeEventKind =
   | "sms"
   | "diary"
   | "photo"
-  | "couple";
+  | "couple"
+  | "relationship";
 
 export type LifeEventActor = "user" | "character" | "shared";
 

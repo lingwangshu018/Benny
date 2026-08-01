@@ -3198,7 +3198,7 @@ button {
 
 .vault-count-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
 }
 
@@ -4140,6 +4140,202 @@ button {
 .couple-stats span {
   color: #9c858e;
   font-size: 6px;
+}
+
+.relationship-profile-card,
+.relationship-growth-preview {
+  display: grid;
+  gap: 9px;
+  padding: 11px;
+  border: 1px solid #ead9e0;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fffafd, #f7edf1);
+}
+
+.relationship-profile-card > header,
+.relationship-growth-preview > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.relationship-profile-card > header > div,
+.relationship-growth-preview > header {
+  min-width: 0;
+}
+
+.relationship-profile-card > header span,
+.relationship-growth-preview > header span {
+  display: block;
+  color: #b08a99;
+  font-size: 6px;
+  letter-spacing: .08em;
+}
+
+.relationship-profile-card > header strong,
+.relationship-growth-preview > header strong {
+  color: #705662;
+  font-size: 10px;
+}
+
+.relationship-profile-card > header button {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 99px;
+  color: white;
+  background: #9b6c7e;
+  font-size: 7px;
+}
+
+.relationship-profile-card > header button:disabled {
+  opacity: .55;
+}
+
+.relationship-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.relationship-metrics article {
+  display: grid;
+  gap: 4px;
+}
+
+.relationship-metrics article > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.relationship-metrics span {
+  color: #8c7880;
+  font-size: 6px;
+}
+
+.relationship-metrics strong {
+  color: #745965;
+  font-size: 8px;
+}
+
+.relationship-metrics i {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eadde2;
+}
+
+.relationship-metrics i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c693a6, #9a6c7d);
+}
+
+.relationship-notes,
+.growth-preview-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.relationship-notes p,
+.growth-preview-copy p,
+.relationship-growth-preview > p,
+.relationship-status {
+  margin: 0;
+  color: #806c74;
+  font-size: 7px;
+  line-height: 1.55;
+}
+
+.relationship-notes p strong,
+.growth-preview-copy p strong {
+  display: block;
+  margin-bottom: 1px;
+  color: #6e5660;
+  font-size: 7px;
+}
+
+.relationship-status {
+  padding: 6px 7px;
+  border-radius: 9px;
+  background: #f0e3e8;
+}
+
+.relationship-growth-preview {
+  border-color: #dcbfca;
+  box-shadow: 0 8px 24px #81596a14;
+}
+
+.relationship-growth-preview > header {
+  display: grid;
+  justify-content: start;
+}
+
+.growth-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 7px;
+  border-radius: 11px;
+  color: #927784;
+  background: #f1e1e7;
+  font-size: 8px;
+}
+
+.growth-stage strong {
+  color: #765260;
+}
+
+.growth-deltas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.growth-deltas article {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 2px;
+  border-radius: 9px;
+  background: #fbf5f7;
+}
+
+.growth-deltas span,
+.growth-deltas small {
+  color: #938088;
+  font-size: 6px;
+}
+
+.growth-deltas strong {
+  color: #807078;
+  font-size: 8px;
+}
+
+.growth-deltas strong.positive { color: #9a5e75; }
+.growth-deltas strong.negative { color: #5f7d78; }
+
+.growth-preview-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 6px;
+}
+
+.growth-preview-actions button {
+  padding: 7px;
+  border-radius: 10px;
+  color: #806b74;
+  background: #eee5e9;
+  font-size: 7px;
+}
+
+.growth-preview-actions button.confirm {
+  color: white;
+  background: #966879;
 }
 
 .couple-composer > strong {

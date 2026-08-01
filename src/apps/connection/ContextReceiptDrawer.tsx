@@ -89,6 +89,8 @@ export function ContextReceiptDrawer({
             <ReceiptItem item={receipt.userPersona} empty="暂未绑定" />
             <label>当前预设</label>
             <ReceiptItem item={receipt.preset} empty="未使用预设" />
+            <label>关系档案</label>
+            <ReceiptItem item={receipt.relationship} empty="暂未建立" />
           </div>
         </section>
 

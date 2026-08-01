@@ -16,6 +16,7 @@ export interface ContextReceipt {
   character: ContextReceiptItem | null;
   userPersona: ContextReceiptItem | null;
   preset: ContextReceiptItem | null;
+  relationship: ContextReceiptItem | null;
   matchedWorldbooks: ContextReceiptItem[];
   memories: ContextReceiptItem[];
   lifeEvents: ContextReceiptItem[];
@@ -44,6 +45,14 @@ const memoryKindLabels: Record<MemoryKind, string> = {
   unresolved: "待续",
   other: "其他",
 };
+
+const relationshipStageLabels = {
+  stranger: "初识",
+  familiar: "熟悉",
+  close: "亲近",
+  ambiguous: "暧昧",
+  committed: "相守",
+} as const;
 
 function includedWorldbookDetail(evaluation: WorldbookEvaluation) {
   if (evaluation.reason === "always") return "常驻读取";
@@ -124,6 +133,13 @@ export const contextReceipt = {
             id: bundle.preset.id,
             title: bundle.preset.title,
             detail: "当前预设已读取",
+          }
+        : null,
+      relationship: bundle.relationshipProfile
+        ? {
+            id: bundle.relationshipProfile.characterId,
+            title: "关系档案",
+            detail: `阶段 ${relationshipStageLabels[bundle.relationshipProfile.stage]} · 亲密 ${bundle.relationshipProfile.metrics.intimacy} · 信任 ${bundle.relationshipProfile.metrics.trust}`,
           }
         : null,
       matchedWorldbooks,
