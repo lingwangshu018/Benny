@@ -8,6 +8,7 @@ import type {
 import type { CharacterMemory } from "./memory";
 import type { LifeEvent } from "./life";
 import type { RelationshipProfile } from "./relationship";
+import type { CharacterLifeProfile } from "./characterLife";
 
 export interface ContextRequest {
   characterId: string;
@@ -23,6 +24,7 @@ export interface ContextSection {
     | "preset"
     | "character"
     | "relationship"
+    | "routine"
     | "memory"
     | "timeline";
   title: string;
@@ -32,6 +34,7 @@ export interface ContextSection {
     | "preset"
     | "character"
     | "relationship"
+    | "routine"
     | "worldbook"
     | "memory"
     | "life-event";
@@ -65,6 +68,7 @@ export interface ContextBundle {
   memories: CharacterMemory[];
   lifeEvents: LifeEvent[];
   relationshipProfile: RelationshipProfile | null;
+  lifeProfile: CharacterLifeProfile | null;
   sections: ContextSection[];
   promptPreview: string;
   characterCount: number;
@@ -79,4 +83,5 @@ export interface ContextBuildOptions {
   selectedMemories?: CharacterMemory[];
   selectedLifeEvents?: LifeEvent[];
   relationshipProfile?: RelationshipProfile | null;
+  lifeProfile?: CharacterLifeProfile | null;
 }

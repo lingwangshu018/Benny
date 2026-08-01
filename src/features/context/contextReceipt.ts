@@ -17,6 +17,7 @@ export interface ContextReceipt {
   userPersona: ContextReceiptItem | null;
   preset: ContextReceiptItem | null;
   relationship: ContextReceiptItem | null;
+  routine: ContextReceiptItem | null;
   matchedWorldbooks: ContextReceiptItem[];
   memories: ContextReceiptItem[];
   lifeEvents: ContextReceiptItem[];
@@ -140,6 +141,15 @@ export const contextReceipt = {
             id: bundle.relationshipProfile.characterId,
             title: "关系档案",
             detail: `阶段 ${relationshipStageLabels[bundle.relationshipProfile.stage]} · 亲密 ${bundle.relationshipProfile.metrics.intimacy} · 信任 ${bundle.relationshipProfile.metrics.trust}`,
+          }
+        : null,
+      routine: bundle.lifeProfile?.enabled
+        ? {
+            id: bundle.lifeProfile.characterId,
+            title: "角色作息",
+            detail: bundle.lifeProfile.proactiveMessages
+              ? "当前作息已读取 · 允许主动联系"
+              : "当前作息已读取 · 不主动联系",
           }
         : null,
       matchedWorldbooks,

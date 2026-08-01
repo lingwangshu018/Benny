@@ -11,6 +11,7 @@ import { libraryRepository } from "../../storage/libraryRepository";
 import { lifeTimelineRepository } from "../../storage/lifeTimelineRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
 import { relationshipRepository } from "../../storage/relationshipRepository";
+import { characterLifeRepository } from "../../storage/characterLifeRepository";
 import type { ChatMessage } from "../../types/ai";
 import type { LifeEvent } from "../../types/life";
 
@@ -151,6 +152,7 @@ export const lifeInteractionEngine = {
         selectedMemories: retrieval.memories,
         selectedLifeEvents: recentLifeEvents,
         relationshipProfile: relationshipRepository.forCharacter(character.id),
+        lifeProfile: characterLifeRepository.forCharacter(character.id),
       },
     );
     const sceneInstruction = `【生活场景 · 短信】

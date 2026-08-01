@@ -7,6 +7,7 @@ import type {
 import type { CharacterMemory } from "../types/memory";
 import type { LifeEvent } from "../types/life";
 import type { RelationshipProfile } from "../types/relationship";
+import type { CharacterLifeProfile } from "../types/characterLife";
 import type {
   VaultArchive,
   VaultCounts,
@@ -26,6 +27,7 @@ const KEYS = {
   memoryExtractionState: "aether.memoryExtractionState",
   timeline: "aether.lifeTimeline",
   relationshipProfiles: "aether.relationshipProfiles",
+  characterLifeProfiles: "aether.characterLifeProfiles",
 } as const;
 
 const PREVIOUS_BACKUP_KEY = "aether.dataVault.previousBackup";
@@ -36,6 +38,7 @@ const CHANGE_EVENTS = [
   "aether-chat-change",
   "aether-life-change",
   "aether-relationship-change",
+  "aether-character-life-change",
 ];
 
 const EMPTY_COUNTS: VaultCounts = {
@@ -48,6 +51,7 @@ const EMPTY_COUNTS: VaultCounts = {
   memories: 0,
   timelineEvents: 0,
   relationshipProfiles: 0,
+  characterLifeProfiles: 0,
 };
 
 const SENSITIVE_KEYS = new Set([
@@ -227,6 +231,22 @@ function validatePayload(
   } else {
     relationshipProfiles = value.relationshipProfiles as RelationshipProfile[];
   }
+  let characterLifeProfiles: CharacterLifeProfile[] = [];
+  if (value.characterLifeProfiles === undefined) {
+    issues.push({
+      level: "warning",
+      code: "legacy-without-character-life",
+      message: "这是旧备份，不含角色作息；将使用默认作息。",
+    });
+  } else if (!Array.isArray(value.characterLifeProfiles)) {
+    issues.push({
+      level: "error",
+      code: "invalid-character-life-profiles",
+      message: "角色作息区域已经损坏。",
+    });
+  } else {
+    characterLifeProfiles = value.characterLifeProfiles as CharacterLifeProfile[];
+  }
   let timeline: LifeEvent[] = [];
   if (value.timeline === undefined) {
     issues.push({
@@ -312,7 +332,8 @@ function validatePayload(
       item.kind !== "diary" &&
       item.kind !== "photo" &&
       item.kind !== "couple" &&
-      item.kind !== "relationship"
+      item.kind !== "relationship" &&
+      item.kind !== "offline"
     ) {
       issues.push({
         level: "error",
@@ -343,6 +364,24 @@ function validatePayload(
         level: "error",
         code: "invalid-relationship-metrics",
         message: `关系档案第 ${index + 1} 条的成长数值损坏。`,
+      });
+    }
+  });
+  characterLifeProfiles.forEach((item, index) => {
+    if (!isRecord(item)) {
+      issues.push({
+        level: "error",
+        code: "invalid-character-life-item",
+        message: `角色作息第 ${index + 1} 条不是可识别资料。`,
+      });
+      return;
+    }
+    requiredText(item, ["characterId", "routineMode"], "角色作息", index, issues);
+    if (!isRecord(item.notes)) {
+      issues.push({
+        level: "error",
+        code: "invalid-character-life-notes",
+        message: `角色作息第 ${index + 1} 条的时段安排损坏。`,
       });
     }
   });
@@ -421,6 +460,11 @@ function validatePayload(
     "关系档案",
     issues,
   );
+  duplicateWarnings(
+    characterLifeProfiles.map((profile) => ({ ...profile, id: profile.characterId })),
+    "角色作息",
+    issues,
+  );
 
   const characterIds = new Set(
     characters
@@ -457,6 +501,12 @@ function validatePayload(
       typeof profile.characterId === "string" &&
       !characterIds.has(profile.characterId),
   ).length;
+  const orphanLifeProfiles = characterLifeProfiles.filter(
+    (profile) =>
+      isRecord(profile) &&
+      typeof profile.characterId === "string" &&
+      !characterIds.has(profile.characterId),
+  ).length;
   if (orphanMemories > 0) {
     issues.push({
       level: "warning",
@@ -485,6 +535,13 @@ function validatePayload(
       message: `${orphanRelationships} 份关系档案找不到对应角色，仍会保留。`,
     });
   }
+  if (orphanLifeProfiles > 0) {
+    issues.push({
+      level: "warning",
+      code: "orphan-character-life",
+      message: `${orphanLifeProfiles} 份角色作息找不到对应角色，仍会保留。`,
+    });
+  }
 
   return {
     characters,
@@ -502,6 +559,7 @@ function validatePayload(
       : {},
     timeline,
     relationshipProfiles,
+    characterLifeProfiles,
   };
 }
 
@@ -525,6 +583,7 @@ function counts(payload: VaultPayload | null): VaultCounts {
     memories: payload.memories.length,
     timelineEvents: payload.timeline.length,
     relationshipProfiles: payload.relationshipProfiles.length,
+    characterLifeProfiles: payload.characterLifeProfiles.length,
   };
 }
 
@@ -600,6 +659,11 @@ function currentPayload(issues: VaultIssue[]): VaultPayload {
       [],
       issues,
     ),
+    characterLifeProfiles: parseStored<CharacterLifeProfile[]>(
+      KEYS.characterLifeProfiles,
+      [],
+      issues,
+    ),
   });
 }
 
@@ -609,7 +673,7 @@ async function createArchiveFromPayload(
   return {
     kind: "bunny-data-vault",
     schemaVersion: 1,
-    appVersion: "0.19",
+    appVersion: "0.20",
     createdAt: Date.now(),
     payload,
     integrity: {
@@ -649,6 +713,10 @@ function writePayload(payload: VaultPayload) {
     window.localStorage.setItem(
       KEYS.relationshipProfiles,
       JSON.stringify(payload.relationshipProfiles),
+    );
+    window.localStorage.setItem(
+      KEYS.characterLifeProfiles,
+      JSON.stringify(payload.characterLifeProfiles),
     );
   } catch (error) {
     for (const [key, value] of originals) {
@@ -756,7 +824,9 @@ export const dataVaultRepository = {
                 ? "0.16"
                 : input.appVersion === "0.17"
                   ? "0.17"
-                  : "0.19",
+                  : input.appVersion === "0.19"
+                    ? "0.19"
+                    : "0.20",
             createdAt: Number(input.createdAt) || Date.now(),
             payload: sanitizedPayload,
             integrity: {
@@ -852,6 +922,7 @@ export const dataVaultRepository = {
       ["记忆整理进度", KEYS.memoryExtractionState],
       ["兔兔时间线", KEYS.timeline],
       ["关系档案", KEYS.relationshipProfiles],
+      ["角色作息", KEYS.characterLifeProfiles],
     ].map(([label, key]) => ({
       label,
       bytes: bytes(

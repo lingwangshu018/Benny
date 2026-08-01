@@ -14,6 +14,8 @@ import type {
 import type { CharacterMemory } from "../types/memory";
 import type { LifeEvent } from "../types/life";
 import type { RelationshipProfile } from "../types/relationship";
+import type { CharacterLifeProfile } from "../types/characterLife";
+import { routineMoment } from "../storage/characterLifeRepository";
 import { memoryEngine } from "../memory/memoryEngine";
 
 function scopeMatches(
@@ -178,6 +180,17 @@ function relationshipText(profile: RelationshipProfile) {
   ].join("\n");
 }
 
+function routineText(profile: CharacterLifeProfile) {
+  const moment = routineMoment(profile);
+  return [
+    `当前时段：${moment.label}`,
+    `当前通常会做：${moment.description}`,
+    `作息类型：${profile.routineMode}`,
+    `主动联系兔兔：${profile.proactiveMessages ? "允许" : "不主动发送"}`,
+    "作息是生活节奏参考，不代表角色每次都机械重复同一件事。",
+  ].join("\n");
+}
+
 export function buildContext(
   snapshot: {
     characters: CharacterCard[];
@@ -203,6 +216,7 @@ export function buildContext(
       memories: [],
       lifeEvents: [],
       relationshipProfile: null,
+      lifeProfile: null,
       sections: [],
       promptPreview: "",
       characterCount: 0,
@@ -244,6 +258,7 @@ export function buildContext(
     );
   const lifeEvents = options.selectedLifeEvents ?? [];
   const relationshipProfile = options.relationshipProfile ?? null;
+  const lifeProfile = options.lifeProfile ?? null;
 
   const sections: ContextSection[] = [];
   if (preset) {
@@ -294,6 +309,17 @@ export function buildContext(
         relationshipText(relationshipProfile),
         relationshipProfile.characterId,
         "relationship",
+      ),
+    );
+  }
+  if (lifeProfile?.enabled) {
+    sections.push(
+      section(
+        "routine",
+        "角色作息与当前状态",
+        routineText(lifeProfile),
+        lifeProfile.characterId,
+        "routine",
       ),
     );
   }
@@ -353,6 +379,7 @@ export function buildContext(
     memories,
     lifeEvents,
     relationshipProfile,
+    lifeProfile,
     sections,
     promptPreview,
     characterCount: promptPreview.length,

@@ -3748,6 +3748,172 @@ button {
   color: #b3757b;
 }
 
+.character-life-card,
+.offline-life-preview {
+  display: grid;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid #d8e1e5;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fbfdff, #edf3f5);
+}
+
+.character-life-card > header,
+.offline-life-preview > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.character-life-card > header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.character-life-card > header span,
+.offline-life-preview > header span {
+  color: #82949d;
+  font-size: 6px;
+  letter-spacing: .08em;
+}
+
+.character-life-card > header strong {
+  overflow: hidden;
+  color: #546973;
+  font-size: 8px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.character-life-card > header em,
+.offline-life-preview > header em {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  border-radius: 99px;
+  color: #718892;
+  background: #e2ecef;
+  font-size: 6px;
+  font-style: normal;
+}
+
+.character-life-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.character-life-actions button,
+.character-life-settings > button {
+  min-height: 29px;
+  padding: 0 9px;
+  border-radius: 10px;
+  color: white;
+  background: #6f8d9a;
+  font-size: 7px;
+}
+
+.character-life-actions button:disabled { opacity: .45; }
+
+.character-life-actions span,
+.character-life-status {
+  color: #75858d;
+  font-size: 7px;
+}
+
+.character-life-settings {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 12px;
+  background: #ffffffb8;
+}
+
+.character-life-settings > summary {
+  color: #617883;
+  cursor: pointer;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.character-life-settings[open] > summary { margin-bottom: 7px; }
+
+.life-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #65767e;
+  font-size: 7px;
+}
+
+.routine-note-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.routine-note-grid label {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  color: #788990;
+  font-size: 6px;
+}
+
+.routine-note-grid input {
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid #dce5e8;
+  border-radius: 9px;
+  color: #566871;
+  background: white;
+  font-size: 7px;
+}
+
+.character-life-status {
+  margin: 0;
+  padding: 6px 7px;
+  border-radius: 9px;
+  background: #e6eef1;
+  line-height: 1.45;
+}
+
+.offline-life-preview {
+  border-color: #c9d9df;
+  box-shadow: 0 10px 24px #526d7b17;
+}
+
+.offline-life-preview > small {
+  color: #82929a;
+  font-size: 6px;
+}
+
+.offline-life-preview > strong {
+  color: #526873;
+  font-size: 11px;
+}
+
+.offline-life-preview > p {
+  margin: 0;
+  color: #65757d;
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.offline-life-preview blockquote {
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 3px solid #7f9ba7;
+  border-radius: 5px 11px 11px 5px;
+  color: #53656d;
+  background: #ffffffcf;
+  font-size: 8px;
+  line-height: 1.55;
+}
+
 .sms-settings-callout {
   min-height: 34px;
   border: 1px solid #cfdde4;

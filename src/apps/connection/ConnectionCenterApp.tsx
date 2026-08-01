@@ -14,6 +14,7 @@ import { libraryRepository } from "../../storage/libraryRepository";
 import { memoryExtractionRepository } from "../../storage/memoryExtractionRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
 import { relationshipRepository } from "../../storage/relationshipRepository";
+import { characterLifeRepository } from "../../storage/characterLifeRepository";
 import type {
   CharacterChatState,
   ChatMessage,
@@ -98,6 +99,9 @@ export function ConnectionCenterApp({
   const [relationshipProfile, setRelationshipProfile] = useState(() =>
     relationshipRepository.forCharacter(session.characterId),
   );
+  const [lifeProfile, setLifeProfile] = useState(() =>
+    characterLifeRepository.forCharacter(session.characterId),
+  );
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
@@ -132,11 +136,20 @@ export function ConnectionCenterApp({
     setRelationshipProfile(
       relationshipRepository.forCharacter(session.characterId),
     );
+    setLifeProfile(characterLifeRepository.forCharacter(session.characterId));
     setMemoryStatus("");
     setSearchOpen(false);
     setSearchQuery("");
     setSearchHits([]);
     setFocusedMessageId("");
+  }, [session.characterId]);
+
+  useEffect(() => {
+    const reload = () =>
+      setLifeProfile(characterLifeRepository.forCharacter(session.characterId));
+    window.addEventListener(characterLifeRepository.changeEvent, reload);
+    return () =>
+      window.removeEventListener(characterLifeRepository.changeEvent, reload);
   }, [session.characterId]);
 
   useEffect(() => {
@@ -200,7 +213,7 @@ export function ConnectionCenterApp({
       buildContext(
         { ...snapshot, memories: characterMemories },
         { ...session, message: draft },
-        { memoryLimit: effectiveMemoryLimit, relationshipProfile },
+        { memoryLimit: effectiveMemoryLimit, relationshipProfile, lifeProfile },
       ),
     [
       snapshot,
@@ -209,6 +222,7 @@ export function ConnectionCenterApp({
       draft,
       effectiveMemoryLimit,
       relationshipProfile,
+      lifeProfile,
     ],
   );
   const activeCharacter = previewBundle.character;
@@ -372,6 +386,7 @@ export function ConnectionCenterApp({
           memoryLimit: effectiveMemoryLimit,
           selectedMemories: retrieval.memories,
           relationshipProfile,
+          lifeProfile,
         },
       );
       const historyLimit =
