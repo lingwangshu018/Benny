@@ -4290,8 +4290,12 @@ button {
 .beauty-wallpaper-card button, .beauty-actions button { padding: 8px 11px; border: 0; border-radius: 99px; color: #66566b; background: #eee4ef; }
 .beauty-wallpaper-card label { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; color: #766878; font-size: 8px; }
 .beauty-wallpaper-card select { padding: 6px; border: 1px solid #ddd2df; border-radius: 9px; background: white; }
-.beauty-code-card header { display: flex; justify-content: space-between; }
-.beauty-code-card header span { color: #948697; font-size: 7px; }
+.beauty-code-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.beauty-code-card header > span { min-width: 0; display: grid; gap: 2px; }
+.beauty-code-card header strong { color: #554858; font-size: 10px; }
+.beauty-code-card header small { color: #948697; font-size: 7px; }
+.beauty-code-card header button { flex: 0 0 auto; padding: 6px 9px; border: 1px solid #dfd3e1; border-radius: 99px; color: #705e74; background: #f2eaf3; font-size: 7px; }
+.beauty-code-card header button:active { transform: scale(.97); }
 .beauty-code-card textarea { width: 100%; padding: 9px; border: 1px solid #e0d6e2; border-radius: 11px; outline: 0; background: #322d39; color: #f1eaf2; font: 8px/1.6 Consolas, monospace; resize: vertical; }
 .beauty-safety-note, .beauty-status { color: #817482; font-size: 8px; line-height: 1.55; }
 .beauty-safety-note code { padding: 2px 4px; border-radius: 4px; background: #ffffffb8; }
