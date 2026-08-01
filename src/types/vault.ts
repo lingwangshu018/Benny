@@ -5,6 +5,7 @@ import type {
   WorldbookEntry,
 } from "./library";
 import type { CharacterMemory } from "./memory";
+import type { LifeEvent } from "./life";
 
 export interface VaultPayload {
   characters: CharacterCard[];
@@ -16,12 +17,13 @@ export interface VaultPayload {
   };
   memories: CharacterMemory[];
   memoryExtractionState: Record<string, number>;
+  timeline: LifeEvent[];
 }
 
 export interface VaultArchive {
   kind: "bunny-data-vault";
   schemaVersion: 1;
-  appVersion: "0.16";
+  appVersion: "0.16" | "0.17";
   createdAt: number;
   payload: VaultPayload;
   integrity: {
@@ -38,6 +40,7 @@ export interface VaultCounts {
   chatSessions: number;
   chatMessages: number;
   memories: number;
+  timelineEvents: number;
 }
 
 export interface VaultIssue {

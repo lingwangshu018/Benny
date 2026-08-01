@@ -13,7 +13,11 @@ const firstPageApps: PhoneApp[] = [
   { id: "记忆宫殿", legacyPage: "memorypalace", icon: "♜", accent: "#7087b9" },
   { id: "资料库", legacyPage: "library", icon: "▤", accent: "#956d58" },
   { id: "数据保险箱", legacyPage: "vault", icon: "◆", accent: "#4f7b78" },
+  { id: "朋友圈", legacyPage: "moments", icon: "◎", accent: "#6f9b85" },
   { id: "短信", legacyPage: "sms", icon: "●", accent: "#79a9c7" },
+  { id: "日记", legacyPage: "diary", icon: "✎", accent: "#a48773" },
+  { id: "相册", legacyPage: "album", icon: "▧", accent: "#7594a3" },
+  { id: "情侣空间", legacyPage: "couple", icon: "♡", accent: "#b77d91" },
 ];
 
 const secondPageApps: PhoneApp[] = [

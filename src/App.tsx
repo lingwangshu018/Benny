@@ -5,6 +5,11 @@ import { CharacterArchiveApp } from "./apps/library/CharacterArchiveApp";
 import { LibraryHubApp } from "./apps/library/LibraryHubApp";
 import { PresetApp } from "./apps/library/PresetApp";
 import { WorldbookApp } from "./apps/library/WorldbookApp";
+import { AlbumApp } from "./apps/life/AlbumApp";
+import { CoupleSpaceApp } from "./apps/life/CoupleSpaceApp";
+import { DiaryApp } from "./apps/life/DiaryApp";
+import { MomentsApp } from "./apps/life/MomentsApp";
+import { SmsApp } from "./apps/life/SmsApp";
 import { MemoryPalaceApp } from "./apps/memory/MemoryPalaceApp";
 import { PomodoroApp } from "./apps/pomodoro/PomodoroApp";
 import { AISettingsApp } from "./apps/settings/AISettingsApp";
@@ -69,6 +74,11 @@ export function App() {
     if (activeApp === "预设") return <PresetApp />;
     if (activeApp === "记忆宫殿") return <MemoryPalaceApp />;
     if (activeApp === "数据保险箱") return <DataVaultApp />;
+    if (activeApp === "朋友圈") return <MomentsApp />;
+    if (activeApp === "短信") return <SmsApp />;
+    if (activeApp === "日记") return <DiaryApp />;
+    if (activeApp === "相册") return <AlbumApp />;
+    if (activeApp === "情侣空间") return <CoupleSpaceApp />;
     if (activeApp === "资料库")
       return (
         <LibraryHubApp
