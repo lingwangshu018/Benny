@@ -4,6 +4,7 @@ import type {
   ChatMessageVersion,
   ChatSearchHit,
   ChatSession,
+  ChatVoiceAttachment,
 } from "../types/ai";
 import { readJson, writeJson } from "./localStorage";
 
@@ -30,13 +31,32 @@ function versionFor(content: string, createdAt: number): ChatMessageVersion {
   };
 }
 
+function normalizeVoice(value: unknown): ChatVoiceAttachment | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const source = value as Partial<ChatVoiceAttachment>;
+  if (source.kind !== "voice" || !String(source.reference || "").trim()) {
+    return undefined;
+  }
+  return {
+    kind: "voice",
+    reference: String(source.reference),
+    mimeType: String(source.mimeType || "audio/webm"),
+    size: Math.max(0, Number(source.size) || 0),
+    durationMs: Math.max(0, Number(source.durationMs) || 0),
+  };
+}
+
 function normalizeMessage(message: ChatMessage): ChatMessage {
+  const channel = message.channel === "call" ? "call" : "chat";
+  const voice = normalizeVoice(message.voice);
   if (message.role !== "assistant") {
     return {
       id: String(message.id),
       role: "user",
       content: String(message.content ?? ""),
       createdAt: Number(message.createdAt) || Date.now(),
+      channel,
+      ...(voice ? { voice } : {}),
     };
   }
   const createdAt = Number(message.createdAt) || Date.now();
@@ -70,6 +90,8 @@ function normalizeMessage(message: ChatMessage): ChatMessage {
     createdAt,
     versions,
     activeVersion,
+    channel,
+    ...(voice ? { voice } : {}),
   };
 }
 

@@ -18,6 +18,14 @@ export interface AISettings {
 
 export type ChatRole = "user" | "assistant";
 
+export interface ChatVoiceAttachment {
+  kind: "voice";
+  reference: string;
+  mimeType: string;
+  size: number;
+  durationMs: number;
+}
+
 export interface ChatMessageVersion {
   id: string;
   content: string;
@@ -31,6 +39,8 @@ export interface ChatMessage {
   createdAt: number;
   versions?: ChatMessageVersion[];
   activeVersion?: number;
+  channel?: "chat" | "call";
+  voice?: ChatVoiceAttachment;
 }
 
 export interface ChatSession {

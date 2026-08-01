@@ -8,6 +8,7 @@ import type { CharacterMemory } from "./memory";
 import type { LifeEvent } from "./life";
 import type { RelationshipProfile } from "./relationship";
 import type { CharacterLifeProfile } from "./characterLife";
+import type { BeautySettings } from "./beauty";
 
 export interface VaultAlbumAsset {
   id: string;
@@ -16,6 +17,10 @@ export interface VaultAlbumAsset {
   createdAt: number;
   data: string;
 }
+
+export interface VaultVoiceAsset extends VaultAlbumAsset {}
+
+export interface VaultBeautyWallpaper extends VaultAlbumAsset {}
 
 export interface VaultPayload {
   characters: CharacterCard[];
@@ -31,12 +36,15 @@ export interface VaultPayload {
   relationshipProfiles: RelationshipProfile[];
   characterLifeProfiles: CharacterLifeProfile[];
   albumAssets: VaultAlbumAsset[];
+  voiceAssets: VaultVoiceAsset[];
+  beautySettings: BeautySettings;
+  beautyWallpaper: VaultBeautyWallpaper | null;
 }
 
 export interface VaultArchive {
   kind: "bunny-data-vault";
   schemaVersion: 1;
-  appVersion: "0.16" | "0.17" | "0.19" | "0.20" | "0.21";
+  appVersion: "0.16" | "0.17" | "0.19" | "0.20" | "0.21" | "0.22";
   createdAt: number;
   payload: VaultPayload;
   integrity: {
@@ -57,6 +65,8 @@ export interface VaultCounts {
   relationshipProfiles: number;
   characterLifeProfiles: number;
   albumAssets: number;
+  voiceAssets: number;
+  beautyAssets: number;
 }
 
 export interface VaultIssue {

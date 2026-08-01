@@ -22,7 +22,8 @@ function normalize(raw: unknown): LifeEvent | null {
     source.kind !== "photo" &&
     source.kind !== "couple" &&
     source.kind !== "relationship" &&
-    source.kind !== "offline"
+    source.kind !== "offline" &&
+    source.kind !== "call"
   ) {
     return null;
   }

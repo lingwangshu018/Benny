@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ChatMessage } from "../../types/ai";
+import { VoiceMessageAudio } from "./VoiceMessageAudio";
 
 interface ChatMessageCardProps {
   message: ChatMessage;
@@ -68,10 +69,14 @@ export function ChatMessageCard({
           </div>
         </div>
       ) : (
-        <p>
-          {message.content ||
-            (message.role === "assistant" && generating ? "…" : "")}
-        </p>
+        <>
+          {message.channel === "call" && <span className="chat-channel-badge">电话</span>}
+          {message.voice && <VoiceMessageAudio voice={message.voice} />}
+          <p>
+            {message.content ||
+              (message.role === "assistant" && generating ? "…" : "")}
+          </p>
+        </>
       )}
 
       <div className="chat-message-footer">

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { ConnectionCenterApp } from "./apps/connection/ConnectionCenterApp";
+import { BeautifyApp } from "./apps/beauty/BeautifyApp";
+import { BeautyRuntime } from "./apps/beauty/BeautyRuntime";
 import { RoleConnectionWorkbenchApp } from "./apps/connection/RoleConnectionWorkbenchApp";
 import { CharacterArchiveApp } from "./apps/library/CharacterArchiveApp";
 import { LibraryHubApp } from "./apps/library/LibraryHubApp";
@@ -66,6 +68,7 @@ export function App() {
     if (activeApp === "连接工作台")
       return <RoleConnectionWorkbenchApp onOpen={openApp} />;
     if (activeApp === "设置") return <AISettingsApp />;
+    if (activeApp === "美化") return <BeautifyApp />;
     if (activeApp === "番茄钟") {
       return <PomodoroApp />;
     }
@@ -102,6 +105,7 @@ export function App() {
 
   return (
     <main className="stage">
+      <BeautyRuntime />
       <PhoneShell
         canGoBack={activeApp !== null}
         onGoBack={goBack}

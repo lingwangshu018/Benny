@@ -15,6 +15,7 @@ export const lifeKindMeta: Record<
   couple: { label: "共同里程碑", icon: "♡" },
   relationship: { label: "关系成长", icon: "↗" },
   offline: { label: "离线活动", icon: "◌" },
+  call: { label: "角色电话", icon: "☎" },
 };
 
 function availableCharacters() {

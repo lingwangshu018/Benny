@@ -8,6 +8,7 @@ import type { CharacterMemory } from "../types/memory";
 import type { LifeEvent } from "../types/life";
 import type { RelationshipProfile } from "../types/relationship";
 import type { CharacterLifeProfile } from "../types/characterLife";
+import type { BeautySettings } from "../types/beauty";
 import type {
   VaultArchive,
   VaultCounts,
@@ -18,6 +19,8 @@ import type {
 } from "../types/vault";
 import { memoryVectorRepository } from "./memoryVectorRepository";
 import { largeStorageRepository } from "./largeStorageRepository";
+import { beautyRepository, defaultBeautySettings } from "./beautyRepository";
+import { cssSafetyIssue } from "./beautyRepository";
 
 const KEYS = {
   characters: "aether.characters",
@@ -29,6 +32,7 @@ const KEYS = {
   timeline: "aether.lifeTimeline",
   relationshipProfiles: "aether.relationshipProfiles",
   characterLifeProfiles: "aether.characterLifeProfiles",
+  beautySettings: "aether.beautySettings",
 } as const;
 
 const PREVIOUS_BACKUP_KEY = "aether.dataVault.previousBackup";
@@ -40,6 +44,7 @@ const CHANGE_EVENTS = [
   "aether-life-change",
   "aether-relationship-change",
   "aether-character-life-change",
+  "aether-beauty-change",
 ];
 
 const EMPTY_COUNTS: VaultCounts = {
@@ -54,6 +59,8 @@ const EMPTY_COUNTS: VaultCounts = {
   relationshipProfiles: 0,
   characterLifeProfiles: 0,
   albumAssets: 0,
+  voiceAssets: 0,
+  beautyAssets: 0,
 };
 
 const SENSITIVE_KEYS = new Set([
@@ -265,6 +272,34 @@ function validatePayload(
   } else {
     albumAssets = value.albumAssets as VaultPayload["albumAssets"];
   }
+  const voiceAssets = Array.isArray(value.voiceAssets)
+    ? (value.voiceAssets as VaultPayload["voiceAssets"])
+    : [];
+  if (value.voiceAssets === undefined) {
+    issues.push({ level: "warning", code: "legacy-without-voice-assets", message: "这是旧备份，不含语音消息文件。" });
+  } else if (!Array.isArray(value.voiceAssets)) {
+    issues.push({ level: "error", code: "invalid-voice-assets", message: "语音文件区域已经损坏。" });
+  }
+  const beautySettings = isRecord(value.beautySettings)
+    ? (value.beautySettings as unknown as BeautySettings)
+    : { ...defaultBeautySettings };
+  if (value.beautySettings !== undefined && !isRecord(value.beautySettings)) {
+    issues.push({ level: "error", code: "invalid-beauty-settings", message: "美化设置区域已经损坏。" });
+  }
+  if (
+    cssSafetyIssue(String(beautySettings.desktopCss || "")) ||
+    cssSafetyIssue(String(beautySettings.chatCss || ""))
+  ) {
+    issues.push({ level: "error", code: "unsafe-beauty-css", message: "美化设置含有不安全的外部加载或脚本式 CSS。" });
+  }
+  const beautyWallpaper = value.beautyWallpaper === null || value.beautyWallpaper === undefined
+    ? null
+    : isRecord(value.beautyWallpaper)
+      ? (value.beautyWallpaper as unknown as VaultPayload["beautyWallpaper"])
+      : null;
+  if (value.beautyWallpaper !== undefined && value.beautyWallpaper !== null && !isRecord(value.beautyWallpaper)) {
+    issues.push({ level: "error", code: "invalid-beauty-wallpaper", message: "壁纸文件区域已经损坏。" });
+  }
   let timeline: LifeEvent[] = [];
   if (value.timeline === undefined) {
     issues.push({
@@ -351,7 +386,8 @@ function validatePayload(
       item.kind !== "photo" &&
       item.kind !== "couple" &&
       item.kind !== "relationship" &&
-      item.kind !== "offline"
+      item.kind !== "offline" &&
+      item.kind !== "call"
     ) {
       issues.push({
         level: "error",
@@ -421,6 +457,17 @@ function validatePayload(
       });
     }
   });
+  voiceAssets.forEach((item, index) => {
+    if (!isRecord(item) || typeof item.data !== "string" || !item.data.startsWith("data:audio/")) {
+      issues.push({ level: "error", code: "invalid-voice-asset", message: `语音文件第 ${index + 1} 项无法识别。` });
+    }
+  });
+  if (
+    beautyWallpaper &&
+    (typeof beautyWallpaper.data !== "string" || !beautyWallpaper.data.startsWith("data:image/"))
+  ) {
+    issues.push({ level: "error", code: "invalid-beauty-wallpaper-data", message: "壁纸不是有效的图片资料。" });
+  }
 
   if (
     !isRecord(chats) ||
@@ -597,6 +644,9 @@ function validatePayload(
     relationshipProfiles,
     characterLifeProfiles,
     albumAssets,
+    voiceAssets,
+    beautySettings,
+    beautyWallpaper,
   };
 }
 
@@ -622,6 +672,8 @@ function counts(payload: VaultPayload | null): VaultCounts {
     relationshipProfiles: payload.relationshipProfiles.length,
     characterLifeProfiles: payload.characterLifeProfiles.length,
     albumAssets: payload.albumAssets.length,
+    voiceAssets: payload.voiceAssets.length,
+    beautyAssets: payload.beautyWallpaper ? 1 : 0,
   };
 }
 
@@ -680,7 +732,11 @@ async function currentPayload(issues: VaultIssue[]): Promise<VaultPayload> {
       ),
     };
   }
-  const albumAssets = await largeStorageRepository.exportPhotos();
+  const [albumAssets, voiceAssets, beautyWallpaper] = await Promise.all([
+    largeStorageRepository.exportPhotos(),
+    largeStorageRepository.exportVoices(),
+    largeStorageRepository.exportWallpaper(),
+  ]);
   return stripSensitive({
     characters: parseStored<CharacterCard[]>(KEYS.characters, [], issues),
     worldbooks: parseStored<WorldbookEntry[]>(KEYS.worldbooks, [], issues),
@@ -704,6 +760,9 @@ async function currentPayload(issues: VaultIssue[]): Promise<VaultPayload> {
       issues,
     ),
     albumAssets,
+    voiceAssets,
+    beautySettings: beautyRepository.read(),
+    beautyWallpaper,
   });
 }
 
@@ -713,7 +772,7 @@ async function createArchiveFromPayload(
   return {
     kind: "bunny-data-vault",
     schemaVersion: 1,
-    appVersion: "0.21",
+    appVersion: "0.22",
     createdAt: Date.now(),
     payload,
     integrity: {
@@ -757,6 +816,10 @@ function writePayload(payload: VaultPayload) {
     window.localStorage.setItem(
       KEYS.characterLifeProfiles,
       JSON.stringify(payload.characterLifeProfiles),
+    );
+    window.localStorage.setItem(
+      KEYS.beautySettings,
+      JSON.stringify(payload.beautySettings),
     );
   } catch (error) {
     for (const [key, value] of originals) {
@@ -868,7 +931,9 @@ export const dataVaultRepository = {
                     ? "0.19"
                     : input.appVersion === "0.20"
                       ? "0.20"
-                      : "0.21",
+                      : input.appVersion === "0.21"
+                        ? "0.21"
+                        : "0.22",
             createdAt: Number(input.createdAt) || Date.now(),
             payload: sanitizedPayload,
             integrity: {
@@ -914,7 +979,11 @@ export const dataVaultRepository = {
     const currentText = JSON.stringify(current);
     await largeStorageRepository.savePreviousArchive(currentText);
     writePayload(archive.payload);
-    await largeStorageRepository.replacePhotos(archive.payload.albumAssets);
+    await Promise.all([
+      largeStorageRepository.replacePhotos(archive.payload.albumAssets),
+      largeStorageRepository.replaceVoices(archive.payload.voiceAssets),
+      largeStorageRepository.replaceWallpaper(archive.payload.beautyWallpaper),
+    ]);
     await memoryVectorRepository.clear().catch(() => undefined);
   },
 
@@ -950,7 +1019,11 @@ export const dataVaultRepository = {
     }
     const current = await this.createArchive();
     writePayload(previous.archive.payload);
-    await largeStorageRepository.replacePhotos(previous.archive.payload.albumAssets);
+    await Promise.all([
+      largeStorageRepository.replacePhotos(previous.archive.payload.albumAssets),
+      largeStorageRepository.replaceVoices(previous.archive.payload.voiceAssets),
+      largeStorageRepository.replaceWallpaper(previous.archive.payload.beautyWallpaper),
+    ]);
     await largeStorageRepository.savePreviousArchive(JSON.stringify(current));
     await memoryVectorRepository.clear().catch(() => undefined);
   },
@@ -966,17 +1039,22 @@ export const dataVaultRepository = {
       ["兔兔时间线", KEYS.timeline],
       ["关系档案", KEYS.relationshipProfiles],
       ["角色作息", KEYS.characterLifeProfiles],
+      ["美化设置", KEYS.beautySettings],
     ].map(([label, key]) => ({
       label,
       bytes: bytes(
         `${key}${window.localStorage.getItem(key) ?? ""}`,
       ),
     }));
-    const [photoUsage, previousStored] = await Promise.all([
+    const [photoUsage, voiceUsage, beautyUsage, previousStored] = await Promise.all([
       largeStorageRepository.photoUsage(),
+      largeStorageRepository.voiceUsage(),
+      largeStorageRepository.beautyUsage(),
       largeStorageRepository.readPreviousArchive(),
     ]);
     categories.push({ label: "IndexedDB 相册", bytes: photoUsage.bytes });
+    categories.push({ label: "IndexedDB 语音", bytes: voiceUsage.bytes });
+    categories.push({ label: "IndexedDB 壁纸", bytes: beautyUsage.bytes });
     const previous =
       previousStored ?? window.localStorage.getItem(PREVIOUS_BACKUP_KEY) ?? "";
     const estimate = await navigator.storage?.estimate?.().catch(() => null);

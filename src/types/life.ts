@@ -5,7 +5,8 @@ export type LifeEventKind =
   | "photo"
   | "couple"
   | "relationship"
-  | "offline";
+  | "offline"
+  | "call";
 
 export type LifeEventActor = "user" | "character" | "shared";
 

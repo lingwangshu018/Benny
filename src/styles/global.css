@@ -2175,13 +2175,23 @@ button {
   font-size: 9px;
 }
 
-.chat-heading > button {
+.chat-heading > button,
+.chat-heading-actions button {
   width: 34px;
   height: 34px;
   border: 1px solid #ffffffc9;
   border-radius: 50%;
   color: #685a6c;
   background: #ffffffb8;
+}
+
+.chat-heading-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.chat-heading-actions button:disabled {
+  opacity: 0.38;
 }
 
 .chat-session-tools {
@@ -2654,6 +2664,38 @@ button {
 
 .chat-message.user time {
   color: #ffffffa6;
+}
+
+.chat-channel-badge {
+  display: inline-block;
+  margin-bottom: 5px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  color: #77647d;
+  background: #eee6f0;
+  font-size: 6px;
+}
+
+.chat-message.user .chat-channel-badge {
+  color: white;
+  background: #ffffff26;
+}
+
+.voice-message-audio {
+  min-width: 176px;
+  display: grid;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.voice-message-audio audio {
+  width: 100%;
+  height: 28px;
+}
+
+.voice-message-audio span {
+  font-size: 7px;
+  opacity: 0.72;
 }
 
 .chat-message-footer {
@@ -4120,9 +4162,142 @@ button {
 
 .sms-composer > div:last-child {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 6px;
 }
+
+.chat-composer .chat-voice-trigger {
+  color: #66576d;
+  background: #ece5ee;
+  font-size: 10px;
+}
+
+.voice-composer {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 7px;
+  padding: 11px;
+  border: 1px solid #ffffffd4;
+  border-radius: 18px;
+  background: #faf6fbe8;
+  box-shadow: 0 10px 25px #5044561a;
+}
+
+.voice-composer header,
+.voice-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.voice-composer header button,
+.voice-composer-actions button,
+.voice-send-button {
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 99px;
+  color: #67586c;
+  background: #eee6f0;
+  font-size: 8px;
+}
+
+.voice-orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px;
+  border-radius: 13px;
+  color: #695a70;
+  background: linear-gradient(135deg, #eee3f1, #e0eeee);
+}
+
+.voice-orb.recording span {
+  color: #c85f76;
+  animation: pulse 900ms ease-in-out infinite alternate;
+}
+
+.voice-composer textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ded4e0;
+  border-radius: 10px;
+  resize: none;
+}
+
+.voice-composer p {
+  margin: 0;
+  color: #897c8d;
+  font-size: 7px;
+}
+
+.voice-composer .voice-send-button {
+  justify-self: stretch;
+  color: white;
+  background: #68586f;
+}
+
+.character-call {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 58px 18px 44px;
+  color: white;
+  background: linear-gradient(165deg, #2f2738, #50536a 58%, #73616d);
+}
+
+.call-aurora {
+  position: absolute;
+  inset: -30%;
+  background: radial-gradient(circle at 60% 35%, #c098b955, transparent 27%), radial-gradient(circle at 30% 65%, #88c1c44d, transparent 30%);
+  filter: blur(24px);
+}
+
+.character-call > *:not(.call-aurora) { position: relative; z-index: 1; }
+.character-call header { width: 100%; display: flex; justify-content: space-between; font-size: 8px; opacity: .78; }
+.call-avatar { width: 98px; height: 98px; margin-top: 35px; overflow: hidden; display: grid; place-items: center; border: 2px solid #ffffff80; border-radius: 34px; background: #ffffff24; font: 36px Georgia, serif; box-shadow: 0 18px 55px #0005; }
+.call-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.character-call h1 { margin: 14px 0 2px; font: 23px Georgia, "Noto Serif SC", serif; }
+.call-status { margin: 0; font-size: 9px; opacity: .75; }
+.call-transcript { width: 100%; min-height: 102px; max-height: 155px; overflow-y: auto; margin: 18px 0 10px; padding: 10px; border-radius: 16px; background: #ffffff12; font-size: 8px; }
+.call-transcript p { margin: 0 0 7px; line-height: 1.5; }
+.call-transcript strong { display: block; font-size: 7px; opacity: .62; }
+.call-transcript .user { text-align: right; }
+.call-input { width: 100%; display: grid; grid-template-columns: auto 1fr auto; gap: 6px; }
+.call-input input { min-width: 0; padding: 9px; border: 0; border-radius: 13px; outline: 0; background: #ffffffdf; }
+.call-input button, .call-end { border: 0; border-radius: 99px; color: white; background: #ffffff25; }
+.call-input button { padding: 0 9px; font-size: 8px; }
+.call-input button.listening { background: #c55b71; }
+.call-end { width: 70px; height: 34px; margin-top: auto; background: #c95668; }
+
+.beautify-app {
+  height: 100%;
+  overflow-y: auto;
+  padding: 62px 15px 55px;
+  color: #403643;
+  background: radial-gradient(circle at 95% 0, #f0d5e1, transparent 35%), linear-gradient(160deg, #faf5f8, #eef6f4);
+}
+
+.beautify-heading span { color: #a26882; font-size: 8px; letter-spacing: .12em; }
+.beautify-heading h1 { margin: 5px 0; font: 25px Georgia, "Noto Serif SC", serif; }
+.beautify-heading p { margin: 0 0 14px; color: #857687; font-size: 9px; line-height: 1.6; }
+.beauty-wallpaper-card, .beauty-code-card { display: grid; gap: 9px; margin-bottom: 11px; padding: 12px; border: 1px solid #ffffffd2; border-radius: 18px; background: #ffffffba; box-shadow: 0 10px 25px #66526a12; }
+.beauty-wallpaper-preview { height: 118px; display: grid; place-items: center; border-radius: 14px; color: white; background: linear-gradient(145deg, #a9cad0, #c9a9bd); background-size: cover; background-position: center; text-shadow: 0 1px 8px #0007; font-size: 10px; }
+.beauty-wallpaper-card button, .beauty-actions button { padding: 8px 11px; border: 0; border-radius: 99px; color: #66566b; background: #eee4ef; }
+.beauty-wallpaper-card label { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; color: #766878; font-size: 8px; }
+.beauty-wallpaper-card select { padding: 6px; border: 1px solid #ddd2df; border-radius: 9px; background: white; }
+.beauty-code-card header { display: flex; justify-content: space-between; }
+.beauty-code-card header span { color: #948697; font-size: 7px; }
+.beauty-code-card textarea { width: 100%; padding: 9px; border: 1px solid #e0d6e2; border-radius: 11px; outline: 0; background: #322d39; color: #f1eaf2; font: 8px/1.6 Consolas, monospace; resize: vertical; }
+.beauty-safety-note, .beauty-status { color: #817482; font-size: 8px; line-height: 1.55; }
+.beauty-safety-note code { padding: 2px 4px; border-radius: 4px; background: #ffffffb8; }
+.beauty-actions { display: flex; justify-content: flex-end; gap: 7px; }
+.beauty-actions button.primary { color: white; background: #765f78; }
+.beauty-status { text-align: center; }
 
 .sms-composer > div:last-child > button {
   width: 34px;

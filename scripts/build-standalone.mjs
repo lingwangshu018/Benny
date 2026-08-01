@@ -19,7 +19,10 @@ if (!scriptMatch || !styleMatch) {
 }
 
 function assetPath(reference) {
-  return path.join(distRoot, reference.replace(/^\.?\//, ""));
+  const relativeReference = reference
+    .replace(/^\.?\//, "")
+    .replace(/^Benny\//, "");
+  return path.join(distRoot, relativeReference);
 }
 
 const [javascript, stylesheet] = await Promise.all([

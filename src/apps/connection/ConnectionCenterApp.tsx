@@ -15,6 +15,8 @@ import { memoryExtractionRepository } from "../../storage/memoryExtractionReposi
 import { memoryRepository } from "../../storage/memoryRepository";
 import { relationshipRepository } from "../../storage/relationshipRepository";
 import { characterLifeRepository } from "../../storage/characterLifeRepository";
+import { largeStorageRepository } from "../../storage/largeStorageRepository";
+import { lifeTimelineRepository } from "../../storage/lifeTimelineRepository";
 import type {
   CharacterChatState,
   ChatMessage,
@@ -24,6 +26,8 @@ import type { ContextRequest } from "../../types/context";
 import { ChatMessageCard } from "./ChatMessageCard";
 import { ChatSessionTools } from "./ChatSessionTools";
 import { ContextReceiptDrawer } from "./ContextReceiptDrawer";
+import { CharacterCallPanel } from "./CharacterCallPanel";
+import { VoiceMessageComposer } from "./VoiceMessageComposer";
 
 interface ConnectionCenterAppProps {
   onOpenSettings: () => void;
@@ -113,6 +117,8 @@ export function ConnectionCenterApp({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchHits, setSearchHits] = useState<ChatSearchHit[]>([]);
   const [focusedMessageId, setFocusedMessageId] = useState("");
+  const [voiceOpen, setVoiceOpen] = useState(false);
+  const [callOpen, setCallOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
@@ -142,6 +148,8 @@ export function ConnectionCenterApp({
     setSearchQuery("");
     setSearchHits([]);
     setFocusedMessageId("");
+    setVoiceOpen(false);
+    setCallOpen(false);
   }, [session.characterId]);
 
   useEffect(() => {
@@ -349,11 +357,11 @@ export function ConnectionCenterApp({
     content: string,
     regeneration: boolean,
   ) {
-    if (sending || !activeCharacter) return;
+    if (sending || !activeCharacter) return null;
     const settings = aiSettingsRepository.read();
     if (!settings.baseUrl || !settings.model) {
       setError("请先在 AI 设置中填写接口地址和模型");
-      return;
+      return null;
     }
     setError("");
     setSending(true);
@@ -442,6 +450,7 @@ export function ConnectionCenterApp({
       setMessages(next);
       setChatState(chatRepository.state(session.characterId));
       if (!regeneration) void organizeMemories(next, false);
+      return response;
     } catch (caught) {
       if (controller.signal.aborted) {
         setError("已停止生成");
@@ -458,6 +467,7 @@ export function ConnectionCenterApp({
       } else {
         setMessages(chatRepository.messages(session.characterId));
       }
+      return null;
     } finally {
       abortRef.current = null;
       setSending(false);
@@ -496,6 +506,95 @@ export function ConnectionCenterApp({
       content,
       false,
     );
+  }
+
+  async function sendVoice(
+    audio: Blob,
+    transcript: string,
+    durationMs: number,
+  ) {
+    if (sending || !activeCharacter) return;
+    const settings = aiSettingsRepository.read();
+    if (!settings.baseUrl || !settings.model) {
+      throw new Error("请先在 AI 设置中填写接口地址和模型");
+    }
+    const userId = messageId("user");
+    const reference = await largeStorageRepository.saveVoice(userId, audio);
+    const userMessage: ChatMessage = {
+      id: userId,
+      role: "user",
+      channel: "chat",
+      content: transcript,
+      voice: {
+        kind: "voice",
+        reference,
+        mimeType: audio.type || "audio/webm",
+        size: audio.size,
+        durationMs,
+      },
+      createdAt: Date.now(),
+    };
+    const assistantMessage: ChatMessage = {
+      id: messageId("assistant"),
+      role: "assistant",
+      content: "",
+      createdAt: Date.now(),
+    };
+    const requestMessages = [...messages, userMessage];
+    const visibleMessages = [...requestMessages, assistantMessage];
+    saveMessages(visibleMessages);
+    const response = await generateReply(
+      requestMessages,
+      visibleMessages,
+      assistantMessage.id,
+      transcript,
+      false,
+    );
+    if (!response) {
+      setMemoryStatus("语音已经保存，可以稍后重新生成角色回复");
+    }
+  }
+
+  async function sendCallTurn(content: string) {
+    if (sending || !activeCharacter) return null;
+    const userMessage: ChatMessage = {
+      id: messageId("user"),
+      role: "user",
+      channel: "call",
+      content,
+      createdAt: Date.now(),
+    };
+    const assistantMessage: ChatMessage = {
+      id: messageId("assistant"),
+      role: "assistant",
+      channel: "call",
+      content: "",
+      createdAt: Date.now(),
+    };
+    const requestMessages = [...chatRepository.messages(session.characterId), userMessage];
+    const visibleMessages = [...requestMessages, assistantMessage];
+    saveMessages(visibleMessages);
+    return generateReply(
+      requestMessages,
+      visibleMessages,
+      assistantMessage.id,
+      content,
+      false,
+    );
+  }
+
+  function endCall(durationMs: number, turns: number) {
+    setCallOpen(false);
+    if (!activeCharacter) return;
+    const seconds = Math.max(1, Math.round(durationMs / 1000));
+    const event = lifeTimelineRepository.create("call", {
+      participantIds: [activeCharacter.id],
+      actor: "shared",
+      title: `与${activeCharacter.remark || activeCharacter.name}通话`,
+      content: `通话 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒，共 ${turns} 轮对话。`,
+    });
+    lifeTimelineRepository.save(event);
+    setMemoryStatus("通话已保存到聊天记录和兔兔时间线");
   }
 
   async function regenerateReply(messageId: string) {
@@ -538,6 +637,8 @@ export function ConnectionCenterApp({
 
   function deleteMessage(messageId: string) {
     if (!window.confirm("删除这一条消息吗？")) return;
+    const voice = messages.find((message) => message.id === messageId)?.voice;
+    if (voice) void largeStorageRepository.removeVoice(voice.reference);
     const next = chatRepository.removeMessage(
       session.characterId,
       messageId,
@@ -620,7 +721,15 @@ export function ConnectionCenterApp({
 
   function clearChat() {
     if (!window.confirm("清空当前会话吗？角色记忆不会被删除。")) return;
+    const voiceReferences = messages.flatMap((message) =>
+      message.voice ? [message.voice.reference] : [],
+    );
     chatRepository.clear(session.characterId);
+    void Promise.all(
+      voiceReferences.map((reference) =>
+        largeStorageRepository.removeVoice(reference),
+      ),
+    );
     memoryExtractionRepository.reset(extractionKey);
     setMessages([]);
     setChatState(chatRepository.state(session.characterId));
@@ -641,6 +750,19 @@ export function ConnectionCenterApp({
     );
   }
 
+  if (callOpen && activeCharacter) {
+    return (
+      <CharacterCallPanel
+        characterName={activeCharacter.remark || activeCharacter.name}
+        characterAvatar={activeCharacter.avatar}
+        voiceHint={activeCharacter.voice}
+        disabled={!aiReady || sending}
+        onTurn={sendCallTurn}
+        onEnd={endCall}
+      />
+    );
+  }
+
   return (
     <section className="chat-app">
       <header className="chat-heading">
@@ -655,9 +777,19 @@ export function ConnectionCenterApp({
           <h1>{activeCharacter?.remark || activeCharacter?.name || "手机通讯"}</h1>
           <span>{sending ? "正在回应…" : aiReady ? "连接就绪" : "尚未设置模型"}</span>
         </div>
-        <button type="button" onClick={onOpenSettings} aria-label="打开 AI 设置">
-          ⚙
-        </button>
+        <div className="chat-heading-actions">
+          <button
+            type="button"
+            disabled={!aiReady || sending}
+            onClick={() => setCallOpen(true)}
+            aria-label="发起角色电话"
+          >
+            ☎
+          </button>
+          <button type="button" onClick={onOpenSettings} aria-label="打开 AI 设置">
+            ⚙
+          </button>
+        </div>
       </header>
 
       <ChatSessionTools
@@ -803,7 +935,23 @@ export function ConnectionCenterApp({
 
       {memoryStatus && <p className="chat-memory-status">{memoryStatus}</p>}
       {error && <p className="chat-error">{error}</p>}
+      {voiceOpen && (
+        <VoiceMessageComposer
+          disabled={sending}
+          onClose={() => setVoiceOpen(false)}
+          onSend={sendVoice}
+        />
+      )}
       <div className="chat-composer">
+        <button
+          className="chat-voice-trigger"
+          type="button"
+          disabled={sending || !aiReady}
+          onClick={() => setVoiceOpen((current) => !current)}
+          aria-label="发送语音消息"
+        >
+          语
+        </button>
         <textarea
           rows={1}
           aria-label="聊天消息"
