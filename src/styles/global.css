@@ -60,6 +60,39 @@ button {
   opacity: 0.72;
 }
 
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-actions button {
+  position: relative;
+  min-width: 28px;
+  height: 27px;
+  padding: 0 7px;
+  border: 1px solid #ffffff80;
+  border-radius: 99px;
+  color: #403644;
+  background: #ffffff8f;
+  font-size: 8px;
+}
+
+.status-actions b {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  display: grid;
+  place-items: center;
+  padding: 0 3px;
+  border-radius: 99px;
+  color: white;
+  background: #c45468;
+  font-size: 7px;
+}
+
 .status-back-button {
   min-width: 58px;
   min-height: 34px;
@@ -679,6 +712,108 @@ button {
   font-size: 10px;
   line-height: 1.65;
 }
+
+.app-unread-badge {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 3px;
+  min-width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border: 2px solid #f5edf4;
+  border-radius: 99px;
+  color: white;
+  background: #c94f67;
+  font-size: 7px;
+}
+
+.lock-screen {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 72px 18px 36px;
+  color: white;
+  background:
+    linear-gradient(180deg, #2d29413d, #17131f8f),
+    linear-gradient(145deg, #b4ccd0, #ad91b1 56%, #665c78);
+  backdrop-filter: blur(22px);
+}
+
+.lock-clock { display: grid; justify-items: center; gap: 3px; text-shadow: 0 3px 18px #31263d66; }
+.lock-clock time { font: 64px/1 Georgia, serif; letter-spacing: -3px; }
+.lock-clock span { font-size: 11px; }
+.lock-notifications { display: grid; gap: 8px; margin-top: 34px; }
+.lock-notifications > button,
+.notification-drawer > div > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid #ffffff48;
+  border-radius: 17px;
+  color: #413746;
+  text-align: left;
+  background: #ffffffe0;
+  box-shadow: 0 9px 25px #2d233633;
+}
+.notice-avatar { width: 34px; height: 34px; overflow: hidden; display: grid; place-items: center; border-radius: 11px; color: white; background: #8b7291; }
+.notice-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.lock-notifications button > span:nth-child(2), .notification-drawer button > span:nth-child(2) { min-width: 0; display: grid; gap: 2px; }
+.lock-notifications strong, .notification-drawer strong { font-size: 9px; }
+.lock-notifications small, .notification-drawer small { overflow: hidden; color: #75697a; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.lock-notifications time { color: #938797; font-size: 7px; }
+.lock-notifications > p { color: #ffffffc7; text-align: center; font-size: 9px; }
+.unlock-button { margin-top: auto; padding: 10px; border: 0; color: white; background: transparent; font-size: 9px; letter-spacing: .12em; animation: unlockFloat 1.5s ease-in-out infinite alternate; }
+@keyframes unlockFloat { to { transform: translateY(-6px); } }
+
+.notification-drawer {
+  position: absolute;
+  z-index: 18;
+  inset: 0;
+  overflow-y: auto;
+  padding: 62px 14px 48px;
+  background: #e9e4ecf5;
+  backdrop-filter: blur(24px);
+}
+.notification-drawer > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.notification-drawer > header div { display: grid; gap: 2px; }
+.notification-drawer > header span { font: 21px Georgia, "Noto Serif SC", serif; }
+.notification-drawer > header strong { color: #857989; font-size: 8px; }
+.notification-drawer > header button, .clear-notifications { padding: 7px 10px; border: 0; border-radius: 99px; color: #685b6c; background: #ffffffb8; font-size: 8px; }
+.notification-drawer > div { display: grid; gap: 8px; }
+.notification-drawer > div > button.read { opacity: .62; }
+.notification-drawer > div > button { grid-template-columns: auto minmax(0, 1fr); }
+.notification-drawer > div > p { text-align: center; color: #897d8c; font-size: 9px; }
+.clear-notifications { display: block; margin: 18px auto 0; color: #a15f6e; }
+
+.notification-banner {
+  position: absolute;
+  z-index: 15;
+  top: 48px;
+  left: 12px;
+  right: 12px;
+  display: grid;
+  gap: 2px;
+  padding: 10px 13px;
+  border: 1px solid #ffffffbf;
+  border-radius: 15px;
+  color: #4c4050;
+  text-align: left;
+  background: #ffffffe8;
+  box-shadow: 0 12px 30px #372c422e;
+  animation: noticeDrop 220ms ease-out;
+}
+.notification-banner span { font-size: 8px; }
+.notification-banner strong { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes noticeDrop { from { opacity: 0; transform: translateY(-10px); } }
 
 .library-guide-button {
   width: 100%;

@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { readJson, writeJson } from "../storage/localStorage";
+import { notificationRepository } from "../storage/notificationRepository";
 import type { AppId, PhoneApp } from "../types/phone";
 import { TimeWidget } from "../widgets/TimeWidget";
 
@@ -71,6 +72,7 @@ interface AppGridProps {
   legacyOrderKey: string;
   slotCount?: number;
   onOpenApp: (appId: AppId) => void;
+  unreadCounts: Partial<Record<AppId, number>>;
 }
 
 interface DesktopDragState {
@@ -90,6 +92,7 @@ function AppGrid({
   legacyOrderKey,
   slotCount = 16,
   onOpenApp,
+  unreadCounts,
 }: AppGridProps) {
   const appsById = new Map(initialApps.map((app) => [app.id, app]));
   const [slots, setSlots] = useState(() =>
@@ -244,6 +247,9 @@ function AppGrid({
                   {app.icon}
                 </span>
                 <span>{app.id}</span>
+                {Boolean(unreadCounts[app.id]) && (
+                  <b className="app-unread-badge">{Math.min(99, unreadCounts[app.id] || 0)}</b>
+                )}
               </button>
             )}
             {!app && editing && (
@@ -270,6 +276,7 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
   const [editing, setEditing] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
+  const [unreadCounts, setUnreadCounts] = useState(() => notificationRepository.unreadCounts());
   const longPressTimer = useRef<number | null>(null);
   const pointerStart = useRef<{
     x: number;
@@ -277,6 +284,12 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
     startedAt: number;
   } | null>(null);
   const suppressClick = useRef(false);
+
+  useEffect(() => {
+    const reload = () => setUnreadCounts(notificationRepository.unreadCounts());
+    window.addEventListener(notificationRepository.changeEvent, reload);
+    return () => window.removeEventListener(notificationRepository.changeEvent, reload);
+  }, []);
 
   function suppressSwipeClick() {
     suppressClick.current = true;
@@ -398,6 +411,7 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
             layoutKey="aether.desktopSlots.homePage1"
             legacyOrderKey="desktopOrder_homePage1"
             onOpenApp={onOpenApp}
+            unreadCounts={unreadCounts}
           />
         </section>
         <section className="desktop-page" aria-hidden={page !== 1}>
@@ -411,6 +425,7 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
             layoutKey="aether.desktopSlots.homePage2"
             legacyOrderKey="desktopOrder_homePage2"
             onOpenApp={onOpenApp}
+            unreadCounts={unreadCounts}
           />
         </section>
       </div>

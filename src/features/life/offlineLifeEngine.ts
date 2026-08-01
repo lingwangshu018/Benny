@@ -15,6 +15,7 @@ import { libraryRepository } from "../../storage/libraryRepository";
 import { lifeTimelineRepository } from "../../storage/lifeTimelineRepository";
 import { memoryRepository } from "../../storage/memoryRepository";
 import { relationshipRepository } from "../../storage/relationshipRepository";
+import { notificationRepository } from "../../storage/notificationRepository";
 import type { ChatMessage } from "../../types/ai";
 import type { OfflineLifePreview } from "../../types/characterLife";
 
@@ -183,6 +184,17 @@ export const offlineLifeEngine = {
           }),
         )
       : null;
+    if (message) {
+      const character = libraryRepository.characters().find((item) => item.id === preview.characterId);
+      notificationRepository.create({
+        kind: "sms",
+        appId: "短信",
+        characterId: preview.characterId,
+        title: character?.remark || character?.name || "角色短信",
+        body: preview.proactiveMessage,
+        avatar: character?.avatar || "",
+      });
+    }
     characterLifeRepository.settle(preview.characterId);
     return { activity, message };
   },

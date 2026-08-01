@@ -11,9 +11,12 @@ function formatTime(date: Date) {
 interface StatusBarProps {
   canGoBack: boolean;
   onGoBack: () => void;
+  unreadCount: number;
+  onOpenNotifications: () => void;
+  onLock: () => void;
 }
 
-export function StatusBar({ canGoBack, onGoBack }: StatusBarProps) {
+export function StatusBar({ canGoBack, onGoBack, unreadCount, onOpenNotifications, onLock }: StatusBarProps) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -36,7 +39,10 @@ export function StatusBar({ canGoBack, onGoBack }: StatusBarProps) {
       ) : (
         <time>{formatTime(now)}</time>
       )}
-      <span className="connection-status">异世界连接中 · 87%</span>
+      <span className="status-actions">
+        <button type="button" onClick={onOpenNotifications} aria-label="打开通知中心">◉{unreadCount > 0 && <b>{Math.min(99, unreadCount)}</b>}</button>
+        <button type="button" onClick={onLock} aria-label="锁定手机">锁</button>
+      </span>
     </header>
   );
 }

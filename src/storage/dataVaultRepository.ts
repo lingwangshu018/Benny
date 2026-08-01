@@ -9,6 +9,7 @@ import type { LifeEvent } from "../types/life";
 import type { RelationshipProfile } from "../types/relationship";
 import type { CharacterLifeProfile } from "../types/characterLife";
 import type { BeautySettings } from "../types/beauty";
+import type { PhoneNotification } from "../types/notification";
 import type {
   VaultArchive,
   VaultCounts,
@@ -33,6 +34,7 @@ const KEYS = {
   relationshipProfiles: "aether.relationshipProfiles",
   characterLifeProfiles: "aether.characterLifeProfiles",
   beautySettings: "aether.beautySettings",
+  notifications: "aether.phoneNotifications",
 } as const;
 
 const PREVIOUS_BACKUP_KEY = "aether.dataVault.previousBackup";
@@ -45,6 +47,7 @@ const CHANGE_EVENTS = [
   "aether-relationship-change",
   "aether-character-life-change",
   "aether-beauty-change",
+  "aether-notification-change",
 ];
 
 const EMPTY_COUNTS: VaultCounts = {
@@ -61,6 +64,7 @@ const EMPTY_COUNTS: VaultCounts = {
   albumAssets: 0,
   voiceAssets: 0,
   beautyAssets: 0,
+  notifications: 0,
 };
 
 const SENSITIVE_KEYS = new Set([
@@ -224,6 +228,9 @@ function validatePayload(
   const worldbooks = arrayField<WorldbookEntry>(value, "worldbooks", issues);
   const presets = arrayField<PromptPreset>(value, "presets", issues);
   const memories = arrayField<CharacterMemory>(value, "memories", issues);
+  const notifications = value.notifications === undefined
+    ? []
+    : arrayField<PhoneNotification>(value, "notifications", issues);
   let relationshipProfiles: RelationshipProfile[] = [];
   if (value.relationshipProfiles === undefined) {
     issues.push({
@@ -647,6 +654,7 @@ function validatePayload(
     voiceAssets,
     beautySettings,
     beautyWallpaper,
+    notifications,
   };
 }
 
@@ -674,6 +682,7 @@ function counts(payload: VaultPayload | null): VaultCounts {
     albumAssets: payload.albumAssets.length,
     voiceAssets: payload.voiceAssets.length,
     beautyAssets: payload.beautyWallpaper ? 1 : 0,
+    notifications: payload.notifications.length,
   };
 }
 
@@ -763,6 +772,7 @@ async function currentPayload(issues: VaultIssue[]): Promise<VaultPayload> {
     voiceAssets,
     beautySettings: beautyRepository.read(),
     beautyWallpaper,
+    notifications: parseStored<PhoneNotification[]>(KEYS.notifications, [], issues),
   });
 }
 
@@ -772,7 +782,7 @@ async function createArchiveFromPayload(
   return {
     kind: "bunny-data-vault",
     schemaVersion: 1,
-    appVersion: "0.22",
+    appVersion: "0.23",
     createdAt: Date.now(),
     payload,
     integrity: {
@@ -820,6 +830,10 @@ function writePayload(payload: VaultPayload) {
     window.localStorage.setItem(
       KEYS.beautySettings,
       JSON.stringify(payload.beautySettings),
+    );
+    window.localStorage.setItem(
+      KEYS.notifications,
+      JSON.stringify(payload.notifications),
     );
   } catch (error) {
     for (const [key, value] of originals) {
@@ -933,7 +947,9 @@ export const dataVaultRepository = {
                       ? "0.20"
                       : input.appVersion === "0.21"
                         ? "0.21"
-                        : "0.22",
+                        : input.appVersion === "0.22"
+                          ? "0.22"
+                          : "0.23",
             createdAt: Number(input.createdAt) || Date.now(),
             payload: sanitizedPayload,
             integrity: {
@@ -1040,6 +1056,7 @@ export const dataVaultRepository = {
       ["关系档案", KEYS.relationshipProfiles],
       ["角色作息", KEYS.characterLifeProfiles],
       ["美化设置", KEYS.beautySettings],
+      ["通知中心", KEYS.notifications],
     ].map(([label, key]) => ({
       label,
       bytes: bytes(

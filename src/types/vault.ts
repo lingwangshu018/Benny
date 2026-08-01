@@ -9,6 +9,7 @@ import type { LifeEvent } from "./life";
 import type { RelationshipProfile } from "./relationship";
 import type { CharacterLifeProfile } from "./characterLife";
 import type { BeautySettings } from "./beauty";
+import type { PhoneNotification } from "./notification";
 
 export interface VaultAlbumAsset {
   id: string;
@@ -39,12 +40,13 @@ export interface VaultPayload {
   voiceAssets: VaultVoiceAsset[];
   beautySettings: BeautySettings;
   beautyWallpaper: VaultBeautyWallpaper | null;
+  notifications: PhoneNotification[];
 }
 
 export interface VaultArchive {
   kind: "bunny-data-vault";
   schemaVersion: 1;
-  appVersion: "0.16" | "0.17" | "0.19" | "0.20" | "0.21" | "0.22";
+  appVersion: "0.16" | "0.17" | "0.19" | "0.20" | "0.21" | "0.22" | "0.23";
   createdAt: number;
   payload: VaultPayload;
   integrity: {
@@ -67,6 +69,7 @@ export interface VaultCounts {
   albumAssets: number;
   voiceAssets: number;
   beautyAssets: number;
+  notifications: number;
 }
 
 export interface VaultIssue {

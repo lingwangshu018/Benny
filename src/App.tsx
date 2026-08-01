@@ -23,6 +23,7 @@ import {
 } from "./features/onboarding/FirstUseGuide";
 import { PhoneShell } from "./phone/PhoneShell";
 import { libraryRepository } from "./storage/libraryRepository";
+import { notificationRepository } from "./storage/notificationRepository";
 import type { AppId } from "./types/phone";
 
 export function App() {
@@ -38,6 +39,7 @@ export function App() {
   });
 
   function openApp(nextApp: AppId) {
+    notificationRepository.markAppRead(nextApp);
     setAppHistory((history) =>
       activeApp ? [...history, activeApp] : history,
     );
@@ -110,6 +112,7 @@ export function App() {
         canGoBack={activeApp !== null}
         onGoBack={goBack}
         onGoHome={goHome}
+        onOpenApp={openApp}
       >
         {activeApp ? renderActiveApp() : <HomeScreen onOpenApp={openApp} />}
       </PhoneShell>

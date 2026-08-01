@@ -1,4 +1,4 @@
-const CACHE_NAME = "bunny-aether-v0.22";
+const CACHE_NAME = "bunny-aether-v0.23";
 const BASE = "/Benny/";
 const APP_SHELL = [
   BASE,
