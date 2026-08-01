@@ -80,6 +80,7 @@ export function AISettingsApp() {
           接口地址
           <input
             placeholder="https://example.com/v1"
+            autoComplete="url"
             value={settings.baseUrl}
             onChange={(event) =>
               setSettings({ ...settings, baseUrl: event.target.value })
@@ -92,6 +93,7 @@ export function AISettingsApp() {
           <div className="secret-input">
             <input
               type={showKey ? "text" : "password"}
+              autoComplete="new-password"
               placeholder="sk-..."
               value={settings.apiKey}
               onChange={(event) =>
@@ -108,6 +110,8 @@ export function AISettingsApp() {
           模型名称
           <input
             list="aether-model-list"
+            name="model"
+            autoComplete="off"
             placeholder="填写模型 ID"
             value={settings.model}
             onChange={(event) =>
