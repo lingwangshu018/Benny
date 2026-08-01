@@ -268,12 +268,25 @@ interface HomeScreenProps {
 export function HomeScreen({ onOpenApp }: HomeScreenProps) {
   const [page, setPage] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [swiping, setSwiping] = useState(false);
   const longPressTimer = useRef<number | null>(null);
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerStart = useRef<{
+    x: number;
+    y: number;
+    startedAt: number;
+  } | null>(null);
   const suppressClick = useRef(false);
 
+  function suppressSwipeClick() {
+    suppressClick.current = true;
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 0);
+  }
+
   function startLongPress(x: number, y: number) {
-    pointerStart.current = { x, y };
+    pointerStart.current = { x, y, startedAt: Date.now() };
     longPressTimer.current = window.setTimeout(() => setEditing(true), 650);
   }
 
@@ -286,7 +299,9 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
 
   return (
     <section
-      className={`home-screen ${editing ? "is-editing" : ""}`}
+      className={`home-screen ${editing ? "is-editing" : ""} ${
+        swiping ? "is-swiping" : ""
+      }`}
       onPointerDown={(event) => {
         if (!editing) startLongPress(event.clientX, event.clientY);
       }}
@@ -297,6 +312,19 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
           event.clientY - pointerStart.current.y,
         );
         if (distance > 12) cancelLongPress();
+        if (editing) return;
+        const horizontal = event.clientX - pointerStart.current.x;
+        const vertical = event.clientY - pointerStart.current.y;
+        if (Math.abs(horizontal) < 7 || Math.abs(horizontal) <= Math.abs(vertical)) {
+          return;
+        }
+        event.preventDefault();
+        setSwiping(true);
+        const atStartEdge = page === 0 && horizontal > 0;
+        const atEndEdge = page === 1 && horizontal < 0;
+        setSwipeOffset(
+          atStartEdge || atEndEdge ? horizontal * 0.28 : horizontal,
+        );
       }}
       onPointerUp={(event) => {
         cancelLongPress();
@@ -306,10 +334,22 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
         }
         const horizontal = event.clientX - pointerStart.current.x;
         const vertical = event.clientY - pointerStart.current.y;
-        if (Math.abs(horizontal) > 56 && Math.abs(horizontal) > Math.abs(vertical)) {
-          suppressClick.current = true;
-          setPage(horizontal < 0 ? 1 : 0);
+        const elapsed = Math.max(1, Date.now() - pointerStart.current.startedAt);
+        const velocity = Math.abs(horizontal) / elapsed;
+        if (
+          Math.abs(horizontal) > 44 &&
+          Math.abs(horizontal) > Math.abs(vertical) &&
+          (Math.abs(horizontal) > 76 || velocity > 0.35)
+        ) {
+          suppressSwipeClick();
+          setPage((current) =>
+            horizontal < 0 ? Math.min(1, current + 1) : Math.max(0, current - 1),
+          );
+        } else if (Math.abs(horizontal) > 8) {
+          suppressSwipeClick();
         }
+        setSwipeOffset(0);
+        setSwiping(false);
         pointerStart.current = null;
       }}
       onClickCapture={(event) => {
@@ -321,6 +361,8 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
       onPointerCancel={() => {
         cancelLongPress();
         pointerStart.current = null;
+        setSwipeOffset(0);
+        setSwiping(false);
       }}
     >
       {!editing && (
@@ -344,7 +386,9 @@ export function HomeScreen({ onOpenApp }: HomeScreenProps) {
 
       <div
         className="desktop-pages"
-        style={{ transform: `translateX(-${page * 100}%)` }}
+        style={{
+          transform: `translate3d(calc(${-page * 100}% + ${swipeOffset}px), 0, 0)`,
+        }}
       >
         <section className="desktop-page" aria-hidden={page !== 0}>
           <TimeWidget />

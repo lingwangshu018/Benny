@@ -9,6 +9,14 @@ import type { LifeEvent } from "./life";
 import type { RelationshipProfile } from "./relationship";
 import type { CharacterLifeProfile } from "./characterLife";
 
+export interface VaultAlbumAsset {
+  id: string;
+  mimeType: string;
+  size: number;
+  createdAt: number;
+  data: string;
+}
+
 export interface VaultPayload {
   characters: CharacterCard[];
   worldbooks: WorldbookEntry[];
@@ -22,12 +30,13 @@ export interface VaultPayload {
   timeline: LifeEvent[];
   relationshipProfiles: RelationshipProfile[];
   characterLifeProfiles: CharacterLifeProfile[];
+  albumAssets: VaultAlbumAsset[];
 }
 
 export interface VaultArchive {
   kind: "bunny-data-vault";
   schemaVersion: 1;
-  appVersion: "0.16" | "0.17" | "0.19" | "0.20";
+  appVersion: "0.16" | "0.17" | "0.19" | "0.20" | "0.21";
   createdAt: number;
   payload: VaultPayload;
   integrity: {
@@ -47,6 +56,7 @@ export interface VaultCounts {
   timelineEvents: number;
   relationshipProfiles: number;
   characterLifeProfiles: number;
+  albumAssets: number;
 }
 
 export interface VaultIssue {

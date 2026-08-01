@@ -17,6 +17,7 @@ import type {
   VaultStorageUsage,
 } from "../types/vault";
 import { memoryVectorRepository } from "./memoryVectorRepository";
+import { largeStorageRepository } from "./largeStorageRepository";
 
 const KEYS = {
   characters: "aether.characters",
@@ -52,6 +53,7 @@ const EMPTY_COUNTS: VaultCounts = {
   timelineEvents: 0,
   relationshipProfiles: 0,
   characterLifeProfiles: 0,
+  albumAssets: 0,
 };
 
 const SENSITIVE_KEYS = new Set([
@@ -247,6 +249,22 @@ function validatePayload(
   } else {
     characterLifeProfiles = value.characterLifeProfiles as CharacterLifeProfile[];
   }
+  let albumAssets: VaultPayload["albumAssets"] = [];
+  if (value.albumAssets === undefined) {
+    issues.push({
+      level: "warning",
+      code: "legacy-without-album-assets",
+      message: "这是旧备份，不含 IndexedDB 相册文件；旧版时间线内的照片仍会保留并自动迁移。",
+    });
+  } else if (!Array.isArray(value.albumAssets)) {
+    issues.push({
+      level: "error",
+      code: "invalid-album-assets",
+      message: "相册文件区域已经损坏。",
+    });
+  } else {
+    albumAssets = value.albumAssets as VaultPayload["albumAssets"];
+  }
   let timeline: LifeEvent[] = [];
   if (value.timeline === undefined) {
     issues.push({
@@ -382,6 +400,24 @@ function validatePayload(
         level: "error",
         code: "invalid-character-life-notes",
         message: `角色作息第 ${index + 1} 条的时段安排损坏。`,
+      });
+    }
+  });
+  albumAssets.forEach((item, index) => {
+    if (!isRecord(item)) {
+      issues.push({
+        level: "error",
+        code: "invalid-album-asset",
+        message: `相册文件第 ${index + 1} 项无法识别。`,
+      });
+      return;
+    }
+    requiredText(item, ["id", "mimeType", "data"], "相册文件", index, issues);
+    if (typeof item.data === "string" && !item.data.startsWith("data:image/")) {
+      issues.push({
+        level: "error",
+        code: "invalid-album-data",
+        message: `相册文件第 ${index + 1} 项不是有效的图片资料。`,
       });
     }
   });
@@ -560,6 +596,7 @@ function validatePayload(
     timeline,
     relationshipProfiles,
     characterLifeProfiles,
+    albumAssets,
   };
 }
 
@@ -584,10 +621,11 @@ function counts(payload: VaultPayload | null): VaultCounts {
     timelineEvents: payload.timeline.length,
     relationshipProfiles: payload.relationshipProfiles.length,
     characterLifeProfiles: payload.characterLifeProfiles.length,
+    albumAssets: payload.albumAssets.length,
   };
 }
 
-function currentPayload(issues: VaultIssue[]): VaultPayload {
+async function currentPayload(issues: VaultIssue[]): Promise<VaultPayload> {
   const storedChats = window.localStorage.getItem(KEYS.chats);
   let chats: VaultPayload["chats"];
   if (storedChats !== null) {
@@ -642,6 +680,7 @@ function currentPayload(issues: VaultIssue[]): VaultPayload {
       ),
     };
   }
+  const albumAssets = await largeStorageRepository.exportPhotos();
   return stripSensitive({
     characters: parseStored<CharacterCard[]>(KEYS.characters, [], issues),
     worldbooks: parseStored<WorldbookEntry[]>(KEYS.worldbooks, [], issues),
@@ -664,6 +703,7 @@ function currentPayload(issues: VaultIssue[]): VaultPayload {
       [],
       issues,
     ),
+    albumAssets,
   });
 }
 
@@ -673,7 +713,7 @@ async function createArchiveFromPayload(
   return {
     kind: "bunny-data-vault",
     schemaVersion: 1,
-    appVersion: "0.20",
+    appVersion: "0.21",
     createdAt: Date.now(),
     payload,
     integrity: {
@@ -735,7 +775,7 @@ export const dataVaultRepository = {
 
   async createArchive() {
     const issues: VaultIssue[] = [];
-    const payload = currentPayload(issues);
+    const payload = await currentPayload(issues);
     validatePayload(payload, issues);
     const errors = issues.filter((issue) => issue.level === "error");
     if (errors.length > 0) {
@@ -826,7 +866,9 @@ export const dataVaultRepository = {
                   ? "0.17"
                   : input.appVersion === "0.19"
                     ? "0.19"
-                    : "0.20",
+                    : input.appVersion === "0.20"
+                      ? "0.20"
+                      : "0.21",
             createdAt: Number(input.createdAt) || Date.now(),
             payload: sanitizedPayload,
             integrity: {
@@ -847,7 +889,7 @@ export const dataVaultRepository = {
 
   async inspectCurrent(): Promise<VaultInspection> {
     const issues: VaultIssue[] = [];
-    const payload = currentPayload(issues);
+    const payload = await currentPayload(issues);
     validatePayload(payload, issues);
     if (!issues.some((issue) => issue.level === "error")) {
       issues.push({
@@ -870,13 +912,16 @@ export const dataVaultRepository = {
   async importArchive(archive: VaultArchive) {
     const current = await this.createArchive();
     const currentText = JSON.stringify(current);
-    window.localStorage.setItem(PREVIOUS_BACKUP_KEY, currentText);
+    await largeStorageRepository.savePreviousArchive(currentText);
     writePayload(archive.payload);
+    await largeStorageRepository.replacePhotos(archive.payload.albumAssets);
     await memoryVectorRepository.clear().catch(() => undefined);
   },
 
   async previousInspection(): Promise<VaultInspection | null> {
-    const text = window.localStorage.getItem(PREVIOUS_BACKUP_KEY);
+    const text =
+      (await largeStorageRepository.readPreviousArchive()) ??
+      window.localStorage.getItem(PREVIOUS_BACKUP_KEY);
     if (!text) return null;
     try {
       return await this.inspectUnknown(JSON.parse(text), bytes(text));
@@ -905,10 +950,8 @@ export const dataVaultRepository = {
     }
     const current = await this.createArchive();
     writePayload(previous.archive.payload);
-    window.localStorage.setItem(
-      PREVIOUS_BACKUP_KEY,
-      JSON.stringify(current),
-    );
+    await largeStorageRepository.replacePhotos(previous.archive.payload.albumAssets);
+    await largeStorageRepository.savePreviousArchive(JSON.stringify(current));
     await memoryVectorRepository.clear().catch(() => undefined);
   },
 
@@ -929,7 +972,13 @@ export const dataVaultRepository = {
         `${key}${window.localStorage.getItem(key) ?? ""}`,
       ),
     }));
-    const previous = window.localStorage.getItem(PREVIOUS_BACKUP_KEY) ?? "";
+    const [photoUsage, previousStored] = await Promise.all([
+      largeStorageRepository.photoUsage(),
+      largeStorageRepository.readPreviousArchive(),
+    ]);
+    categories.push({ label: "IndexedDB 相册", bytes: photoUsage.bytes });
+    const previous =
+      previousStored ?? window.localStorage.getItem(PREVIOUS_BACKUP_KEY) ?? "";
     const estimate = await navigator.storage?.estimate?.().catch(() => null);
     return {
       bunnyBytes: categories.reduce((total, item) => total + item.bytes, 0),

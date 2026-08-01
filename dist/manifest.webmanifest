@@ -1,0 +1,20 @@
+{
+  "name": "异世界连接 Bunny",
+  "short_name": "Bunny",
+  "description": "连接角色、记忆与生活时间线的私人小手机。",
+  "lang": "zh-CN",
+  "start_url": "/Benny/",
+  "scope": "/Benny/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#efe7f2",
+  "theme_color": "#eedcf4",
+  "icons": [
+    {
+      "src": "/Benny/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

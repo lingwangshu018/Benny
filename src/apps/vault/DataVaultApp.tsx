@@ -37,6 +37,7 @@ function emptyInspection(fileSize: number): VaultInspection {
       timelineEvents: 0,
       relationshipProfiles: 0,
       characterLifeProfiles: 0,
+      albumAssets: 0,
     },
     issues: [
       {
@@ -65,6 +66,7 @@ function InspectionSummary({
     ["生活", inspection.counts.timelineEvents],
     ["关系", inspection.counts.relationshipProfiles],
     ["作息", inspection.counts.characterLifeProfiles],
+    ["照片", inspection.counts.albumAssets],
   ];
   return (
     <>
@@ -223,9 +225,9 @@ export function DataVaultApp() {
   return (
     <section className="data-vault-app">
       <header className="vault-heading">
-        <span>DATA VAULT · v0.20</span>
+        <span>DATA VAULT · v0.21</span>
         <h1>数据保险箱</h1>
-        <p>完整守护角色、世界书、预设、聊天、兔兔记忆、关系档案、作息与生活时间线。</p>
+        <p>完整守护角色、世界书、预设、聊天、兔兔记忆、关系档案、作息、生活时间线与 IndexedDB 相册。</p>
       </header>
 
       <article className="vault-security-note">
